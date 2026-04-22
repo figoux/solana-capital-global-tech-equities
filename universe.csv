@@ -1,0 +1,125 @@
+ticker,yahoo_ticker,name,subsector,country,currency,fiscal_year_end,mkt_cap_rank_hint,notes,is_private
+NVDA,NVDA,Nvidia,Semis,US,USD,Jan,1,,0
+TSM,TSM,Taiwan Semiconductor ADR,Semis,TW,USD,Dec,2,ADR of 2330.TW,0
+AVGO,AVGO,Broadcom,Semis,US,USD,Oct,3,,0
+AMD,AMD,Advanced Micro Devices,Semis,US,USD,Dec,4,,0
+QCOM,QCOM,Qualcomm,Semis,US,USD,Sep,5,,0
+TXN,TXN,Texas Instruments,Semis,US,USD,Dec,6,,0
+ARM,ARM,Arm Holdings,Semis,UK,USD,Mar,7,,0
+MU,MU,Micron Technology,Semis,US,USD,Aug,8,,0
+INTC,INTC,Intel,Semis,US,USD,Dec,9,,0
+MRVL,MRVL,Marvell Technology,Semis,US,USD,Jan,11,,0
+NXPI,NXPI,NXP Semiconductors,Semis,NL,USD,Dec,12,,0
+005930.KS,005930.KS,Samsung Electronics,OEMs,KR,KRW,Dec,13,also semis; classified OEM for display/memory mix,0
+MPWR,MPWR,Monolithic Power Systems,Semis,US,USD,Dec,14,,0
+ON,ON,ON Semiconductor,Semis,US,USD,Dec,15,,0
+MCHP,MCHP,Microchip Technology,Semis,US,USD,Mar,16,,0
+SWKS,SWKS,Skyworks Solutions,Semis,US,USD,Sep,19,,0
+GFS,GFS,GlobalFoundries,Semis,US,USD,Dec,21,,0
+COHR,COHR,Coherent Corp,Semis,US,USD,Jun,22,also CPO/optics,0
+UMC,UMC,United Microelectronics,Semis,TW,USD,Dec,23,,0
+000660.KS,000660.KS,SK Hynix,Semis,KR,KRW,Dec,24,,0
+RMBS,RMBS,Rambus,Semis,US,USD,Dec,25,,0
+ASML,ASML,ASML Holding,WFEs,NL,EUR,Dec,26,,0
+AMAT,AMAT,Applied Materials,WFEs,US,USD,Oct,27,,0
+LRCX,LRCX,Lam Research,WFEs,US,USD,Jun,28,,0
+KLAC,KLAC,KLA Corp,WFEs,US,USD,Jun,29,,0
+TER,TER,Teradyne,WFEs,US,USD,Dec,31,,0
+CRM,CRM,Salesforce,SaaS,US,USD,Jan,38,,0
+NOW,NOW,ServiceNow,SaaS,US,USD,Dec,39,,0
+ADBE,ADBE,Adobe,SaaS,US,USD,Dec,40,,0
+WDAY,WDAY,Workday,SaaS,US,USD,Jan,42,,0
+SNOW,SNOW,Snowflake,SaaS,US,USD,Jan,43,,0
+DDOG,DDOG,Datadog,SaaS,US,USD,Dec,45,,0
+SHOP,SHOP,Shopify,SaaS,CA,USD,Dec,46,,0
+VEEV,VEEV,Veeva Systems,SaaS,US,USD,Jan,47,,0
+MDB,MDB,MongoDB,SaaS,US,USD,Jan,48,,0
+HUBS,HUBS,HubSpot,SaaS,US,USD,Dec,49,,0
+ZM,ZM,Zoom Communications,SaaS,US,USD,Jan,50,,0
+DOCU,DOCU,DocuSign,SaaS,US,USD,Jan,51,,0
+TWLO,TWLO,Twilio,SaaS,US,USD,Dec,52,,0
+TTD,TTD,The Trade Desk,SaaS,US,USD,Dec,53,ad tech,0
+U,U,Unity Software,SaaS,US,USD,Dec,54,gaming engine,0
+ESTC,ESTC,Elastic,SaaS,US,USD,Apr,55,,0
+CFLT,CFLT,Confluent,SaaS,US,USD,Dec,56,,0
+GTLB,GTLB,GitLab,SaaS,US,USD,Jan,57,,0
+GOOGL,GOOGL,Alphabet Class A,Internet,US,USD,Dec,60,,0
+META,META,Meta Platforms,Internet,US,USD,Dec,61,,0
+AMZN,AMZN,Amazon.com,Internet,US,USD,Dec,62,,0
+NFLX,NFLX,Netflix,Internet,US,USD,Dec,63,,0
+0700.HK,0700.HK,Tencent Holdings,Internet,HK,HKD,Dec,64,,0
+9988.HK,9988.HK,Alibaba Group,Internet,HK,HKD,Mar,65,,0
+UBER,UBER,Uber Technologies,Internet,US,USD,Dec,66,,0
+BKNG,BKNG,Booking Holdings,Internet,US,USD,Dec,67,,0
+PDD,PDD,PDD Holdings,Internet,CN,USD,Dec,69,,0
+3690.HK,3690.HK,Meituan,Internet,HK,HKD,Dec,70,,0
+JD,JD,JD.com,Internet,CN,USD,Dec,71,,0
+ABNB,ABNB,Airbnb,Internet,US,USD,Dec,72,,0
+DASH,DASH,DoorDash,Internet,US,USD,Dec,73,,0
+SPOT,SPOT,Spotify Technology,Internet,SE,EUR,Dec,74,,0
+PINS,PINS,Pinterest,Internet,US,USD,Dec,75,,0
+SNAP,SNAP,Snap Inc,Internet,US,USD,Dec,76,,0
+RDDT,RDDT,Reddit,Internet,US,USD,Dec,77,,0
+BIDU,BIDU,Baidu,Internet,CN,USD,Dec,78,,0
+RBLX,RBLX,Roblox,Internet,US,USD,Dec,80,gaming platform,0
+EA,EA,Electronic Arts,Internet,US,USD,Mar,81,gaming,0
+TTWO,TTWO,Take-Two Interactive,Internet,US,USD,Mar,82,gaming,0
+AAPL,AAPL,Apple,OEMs,US,USD,Sep,83,,0
+2317.TW,2317.TW,Hon Hai Precision (Foxconn),OEMs,TW,TWD,Dec,84,,0
+1810.HK,1810.HK,Xiaomi,OEMs,HK,CNY,Dec,85,,0
+DELL,DELL,Dell Technologies,OEMs,US,USD,Jan,86,,0
+HPQ,HPQ,HP Inc,OEMs,US,USD,Oct,87,,0
+0992.HK,0992.HK,Lenovo Group,OEMs,HK,USD,Mar,88,,0
+6758.T,6758.T,Sony Group,OEMs,JP,JPY,Mar,89,,0
+7974.T,7974.T,Nintendo,OEMs,JP,JPY,Mar,90,,0
+LOGI,LOGI,Logitech International,OEMs,CH,USD,Mar,91,,0
+GRMN,GRMN,Garmin,OEMs,US,USD,Dec,92,,0
+MSFT,MSFT,Microsoft,Cloud/Data,US,USD,Jun,93,,0
+ORCL,ORCL,Oracle,Cloud/Data,US,USD,May,94,,0
+IBM,IBM,IBM,Cloud/Data,US,USD,Dec,95,,0
+PLTR,PLTR,Palantir,Cloud/Data,US,USD,Dec,96,,0
+SAP,SAP,SAP SE,Cloud/Data,DE,EUR,Dec,97,,0
+DBX,DBX,Dropbox,Cloud/Data,US,USD,Dec,98,,0
+BOX,BOX,Box Inc,Cloud/Data,US,USD,Jan,99,,0
+PSTG,PSTG,Pure Storage,Cloud/Data,US,USD,Jan,101,,0
+CRWD,CRWD,CrowdStrike,Cybersecurity,US,USD,Jan,103,,0
+PANW,PANW,Palo Alto Networks,Cybersecurity,US,USD,Jul,104,,0
+FTNT,FTNT,Fortinet,Cybersecurity,US,USD,Dec,105,,0
+ZS,ZS,Zscaler,Cybersecurity,US,USD,Jul,106,,0
+S,S,SentinelOne,Cybersecurity,US,USD,Jan,107,,0
+OKTA,OKTA,Okta,Cybersecurity,US,USD,Jan,110,,0
+NET,NET,Cloudflare,Cybersecurity,US,USD,Dec,111,also networking,0
+V,V,Visa,Financial Services,US,USD,Sep,115,,0
+MA,MA,Mastercard,Financial Services,US,USD,Dec,116,,0
+PYPL,PYPL,PayPal Holdings,Financial Services,US,USD,Dec,117,,0
+XYZ,XYZ,Block Inc,Financial Services,US,USD,Dec,118,ex-SQ,0
+COIN,COIN,Coinbase Global,Financial Services,US,USD,Dec,119,,0
+HOOD,HOOD,Robinhood Markets,Financial Services,US,USD,Dec,120,,0
+AFRM,AFRM,Affirm Holdings,Financial Services,US,USD,Jun,121,,0
+ADYEN.AS,ADYEN.AS,Adyen,Financial Services,NL,EUR,Dec,126,,0
+TOST,TOST,Toast Inc,Financial Services,US,USD,Dec,129,,0
+CSCO,CSCO,Cisco Systems,Networking,US,USD,Jul,130,,0
+ANET,ANET,Arista Networks,Networking,US,USD,Dec,131,,0
+JNPR,JNPR,Juniper Networks,Networking,US,USD,Dec,132,check HPE acquisition status,0
+HPE,HPE,Hewlett Packard Enterprise,Networking,US,USD,Oct,133,,0
+NTAP,NTAP,NetApp,Networking,US,USD,Apr,134,,0
+NOK,NOK,Nokia,Networking,FI,EUR,Dec,135,,0
+ERIC,ERIC,Ericsson,Networking,SE,SEK,Dec,136,,0
+CIEN,CIEN,Ciena,Networking,US,USD,Oct,137,,0
+LITE,LITE,Lumentum Holdings,Networking,US,USD,Jun,138,CPO/optics,0
+FFIV,FFIV,F5 Inc,Networking,US,USD,Sep,139,,0
+ISRG,ISRG,Intuitive Surgical,Robotics,US,USD,Dec,140,,0
+6954.T,6954.T,Fanuc,Robotics,JP,JPY,Mar,141,,0
+6506.T,6506.T,Yaskawa Electric,Robotics,JP,JPY,Feb,142,,0
+SYM,SYM,Symbotic,Robotics,US,USD,Sep,143,,0
+ABBNY,ABBNY,ABB Ltd ADR,Robotics,CH,USD,Dec,144,,0
+ROK,ROK,Rockwell Automation,Robotics,US,USD,Sep,145,,0
+CGNX,CGNX,Cognex,Robotics,US,USD,Dec,146,machine vision,0
+ZBRA,ZBRA,Zebra Technologies,Robotics,US,USD,Dec,147,warehouse automation,0
+TRMB,TRMB,Trimble,Robotics,US,USD,Dec,148,,0
+AUR,AUR,Aurora Innovation,Robotics,US,USD,Dec,149,autonomous trucks,0
+IRBT,IRBT,iRobot,Robotics,US,USD,Dec,150,,0
+UNITREE_PVT,,Unitree Robotics,Robotics,CN,CNY,Dec,151,"private; humanoid/quadruped robotics",1
+MINIMAX_PVT,,MiniMax AI,SaaS,CN,CNY,Dec,152,"private; LLM lab (Talkie, ABAB)",1
+688256.SS,688256.SS,Cambricon Technologies,Semis,CN,CNY,Dec,153,"AI chips; STAR Market — Shanghai",0
+BE,BE,Bloom Energy,Cloud/Data,US,USD,Dec,154,solid oxide fuel cells — datacenter power,0

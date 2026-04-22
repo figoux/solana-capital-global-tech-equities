@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Secrets — NEVER commit
+.env
+.env.local
+.env.production
+.env.*.local
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+*.log
+etl.log
+
+# DB write-ahead (keep dashboard.db itself!)
+backend/db/*.db-journal
+backend/db/*.db-wal
+backend/db/*.db-shm
+
+# Notes privados (pode comitar se quiser — remova daqui)
+notes/drafts/
+scratch/

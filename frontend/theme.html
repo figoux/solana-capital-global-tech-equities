@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Theme — Solana Global Tech</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    body { font-family: -apple-system, "Inter", sans-serif; }
+    .muted { color: #6b7280; }
+    .num { font-variant-numeric: tabular-nums; }
+    .chip-bull-2  { background:#14532d; color:#f0fdf4; }
+    .chip-bull-1  { background:#22c55e; color:#14532d; }
+    .chip-bull-0  { background:#1f2937; color:#9ca3af; }
+    .chip-bull-n1 { background:#ef4444; color:#450a0a; }
+    .chip-bull-n2 { background:#7f1d1d; color:#fee2e2; }
+    .dir-long   { color:#34d399; }
+    .dir-short  { color:#f87171; }
+    .dir-flat   { color:#9ca3af; }
+    .score-bar  { height: 6px; border-radius: 3px; background:#0f172a; }
+    .score-bar > div { height: 6px; border-radius: 3px; background:#10b981; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+
+<div x-data="theme" x-init="load()" class="max-w-screen-2xl mx-auto p-6">
+
+  <!-- Nav -->
+  <nav class="mb-4 flex items-center justify-between">
+    <a href="/" class="text-sm muted hover:text-emerald-400">← Dashboard</a>
+    <span class="text-xs muted" x-text="data?.theme ? (data.theme.category || '').toUpperCase() : ''"></span>
+  </nav>
+
+  <!-- Header -->
+  <header x-show="data?.theme" class="mb-6 border-b border-slate-700 pb-4">
+    <div class="flex items-baseline gap-3">
+      <h1 class="text-3xl font-bold" x-text="data?.theme?.name"></h1>
+      <span class="text-xs muted" x-text="'theme_id: ' + (data?.theme?.theme_id || '')"></span>
+      <span class="ml-auto text-sm muted" x-text="data?.total_exposed + ' tickers expostos (score ≥ ' + minScore + ')'"></span>
+    </div>
+    <p x-show="data?.theme?.description" class="mt-2 text-slate-300 text-sm" x-text="data?.theme?.description"></p>
+  </header>
+
+  <div x-show="!data?.theme" class="muted">Carregando…</div>
+
+  <!-- Tabs -->
+  <div x-show="data?.theme" class="flex gap-2 mb-4 border-b border-slate-800">
+    <template x-for="t in tabs" :key="t.id">
+      <button @click="tab=t.id"
+              :class="tab===t.id ? 'border-emerald-500 text-emerald-400' : 'border-transparent muted hover:text-slate-200'"
+              class="px-3 py-2 text-sm font-medium border-b-2" x-text="t.label"></button>
+    </template>
+  </div>
+
+  <!-- Filter bar -->
+  <div x-show="data?.theme" class="mb-4 flex flex-wrap items-center gap-3 text-xs">
+    <label class="flex items-center gap-2">
+      <span class="muted">Min score</span>
+      <input type="number" step="5" min="0" max="100" x-model.number="minScore" @change="load()"
+             class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-1 num" />
+    </label>
+    <label class="flex items-center gap-2">
+      <span class="muted">Top N</span>
+      <input type="number" step="5" min="5" max="80" x-model.number="topN" @change="load()"
+             class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-1 num" />
+    </label>
+    <span class="muted ml-auto">Direção default vem de <em>bullishness × subsetor</em>; override por ticker disponível.</span>
+  </div>
+
+  <!-- TAB: Tickers expostos -->
+  <section x-show="data && tab==='tickers'" class="space-y-4">
+    <div class="overflow-x-auto border border-slate-800 rounded">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-slate-800">
+            <th class="text-left px-3 py-2">Ticker</th>
+            <th class="text-left px-2 py-2">Subsetor</th>
+            <th class="text-right px-2 py-2">Score</th>
+            <th class="text-center px-2 py-2">Subsetor bull</th>
+            <th class="text-center px-2 py-2">Direção</th>
+            <th class="text-right px-2 py-2">Mkt cap</th>
+            <th class="text-right px-2 py-2">P/E FY1</th>
+            <th class="text-right px-2 py-2">EPS gr</th>
+            <th class="text-right px-2 py-2">RV 30d</th>
+            <th class="text-right px-2 py-2">IV 30d</th>
+            <th class="text-right px-2 py-2">IV/RV</th>
+            <th class="text-left px-2 py-2">Próx. EPS</th>
+            <th class="px-2 py-2">Override</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="t in data.tickers" :key="t.ticker">
+            <tr class="border-t border-slate-800 hover:bg-slate-850">
+              <td class="px-3 py-2">
+                <a :href="'/company/' + t.ticker" class="font-semibold hover:text-emerald-400" x-text="t.ticker"></a>
+                <div class="muted text-xs truncate max-w-xs" x-text="t.name"></div>
+              </td>
+              <td class="px-2 py-2 muted" x-text="t.subsector"></td>
+              <td class="px-2 py-2 text-right num">
+                <div x-text="Number(t.score).toFixed(0)"></div>
+                <div class="score-bar w-16 ml-auto mt-1">
+                  <div :style="'width:' + Math.min(100, t.score) + '%'"></div>
+                </div>
+                <div class="muted text-[10px]" x-text="t.source === 'manual' ? '🔒 manual' : 'auto'"></div>
+              </td>
+              <td class="px-2 py-2 text-center">
+                <span :class="bullClass(t.subsector_bull)" class="inline-block px-2 py-0.5 rounded text-xs font-semibold"
+                      x-text="bullText(t.subsector_bull)"></span>
+              </td>
+              <td class="px-2 py-2 text-center">
+                <span :class="dirClass(t.direction)" class="font-bold text-sm" x-text="dirLabel(t.direction)"></span>
+                <div x-show="t.direction_override !== null" class="text-[10px] muted">override</div>
+              </td>
+              <td class="px-2 py-2 text-right num" x-text="fmtB(t.mkt_cap_usd)"></td>
+              <td class="px-2 py-2 text-right num" x-text="fmt(t.fwd_pe_fy1, 'x')"></td>
+              <td class="px-2 py-2 text-right num" :class="colorPct(t.eps_growth_fy1)" x-text="fmtPct(t.eps_growth_fy1)"></td>
+              <td class="px-2 py-2 text-right num" x-text="fmtPct(t.rv_30d)"></td>
+              <td class="px-2 py-2 text-right num" x-text="fmtPct(t.iv_30d_atm)"></td>
+              <td class="px-2 py-2 text-right num" x-text="ivRv(t)"></td>
+              <td class="px-2 py-2 muted" x-text="t.next_earnings_date || '—'"></td>
+              <td class="px-2 py-2 text-center">
+                <div class="flex gap-1 justify-center">
+                  <button @click="setDirection(t, 1)" title="Force long"
+                          class="w-6 h-6 rounded bg-slate-800 hover:bg-emerald-700 text-emerald-400">L</button>
+                  <button @click="setDirection(t, -1)" title="Force short"
+                          class="w-6 h-6 rounded bg-slate-800 hover:bg-red-700 text-red-400">S</button>
+                  <button @click="setDirection(t, null)" title="Clear override"
+                          class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-600 muted">×</button>
+                </div>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+    <p x-show="data?.tickers?.length === 0" class="muted text-sm">Nenhum ticker com score ≥ <span x-text="minScore"></span>.</p>
+  </section>
+
+  <!-- TAB: Basket sugerido -->
+  <section x-show="data && tab==='basket'" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-slate-800 border border-slate-700 rounded p-4">
+      <h2 class="text-sm font-semibold muted uppercase mb-2">Longs</h2>
+      <p class="text-xs muted mb-3" x-text="'Equal-weight · ' + (data.basket.longs.length) + ' posições'"></p>
+      <table class="w-full text-sm">
+        <template x-for="p in data.basket.longs" :key="p.ticker">
+          <tr class="border-t border-slate-700">
+            <td class="py-1.5">
+              <a :href="'/company/' + p.ticker" class="font-medium hover:text-emerald-400" x-text="p.ticker"></a>
+            </td>
+            <td class="py-1.5 text-right num dir-long" x-text="p.weight_pct + '%'"></td>
+          </tr>
+        </template>
+      </table>
+      <p x-show="data.basket.longs.length===0" class="muted text-sm">Nenhum long sugerido (sem subsetor com bull > 0).</p>
+    </div>
+
+    <div class="bg-slate-800 border border-slate-700 rounded p-4">
+      <h2 class="text-sm font-semibold muted uppercase mb-2">Shorts</h2>
+      <p class="text-xs muted mb-3" x-text="'Equal-weight · ' + (data.basket.shorts.length) + ' posições'"></p>
+      <table class="w-full text-sm">
+        <template x-for="p in data.basket.shorts" :key="p.ticker">
+          <tr class="border-t border-slate-700">
+            <td class="py-1.5">
+              <a :href="'/company/' + p.ticker" class="font-medium hover:text-emerald-400" x-text="p.ticker"></a>
+            </td>
+            <td class="py-1.5 text-right num dir-short" x-text="p.weight_pct + '%'"></td>
+          </tr>
+        </template>
+      </table>
+      <p x-show="data.basket.shorts.length===0" class="muted text-sm">Nenhum short sugerido.</p>
+    </div>
+  </section>
+
+  <!-- TAB: Pair trades intra-tema -->
+  <section x-show="data && tab==='pairs'" class="space-y-3">
+    <div x-show="!pairs" class="muted">Carregando pares…</div>
+    <div x-show="pairs && pairs.pairs.length===0" class="muted text-sm">Nenhum par com cosine sim suficiente no subset do tema.</div>
+    <div class="overflow-x-auto border border-slate-800 rounded" x-show="pairs && pairs.pairs.length > 0">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-slate-800">
+            <th class="text-left px-3 py-2">Par</th>
+            <th class="text-right px-2 py-2">Cosine</th>
+            <th class="text-left px-2 py-2">Overlap top</th>
+            <th class="text-right px-2 py-2">IV A / B</th>
+            <th class="text-right px-2 py-2">IV spread</th>
+            <th class="text-right px-2 py-2">P/E A / B</th>
+            <th class="text-right px-2 py-2">Mcap A / B</th>
+            <th class="text-left px-2 py-2">Trade sugerido</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="p in pairs.pairs" :key="p.ticker_a + '_' + p.ticker_b">
+            <tr class="border-t border-slate-800">
+              <td class="px-3 py-2">
+                <a :href="'/pair/' + p.ticker_a + '/' + p.ticker_b" class="font-semibold hover:text-emerald-400"
+                   x-text="p.ticker_a + ' × ' + p.ticker_b"></a>
+                <div class="muted text-[10px]" x-text="p.sub_a + ' / ' + p.sub_b"></div>
+              </td>
+              <td class="px-2 py-2 text-right num" x-text="Number(p.cosine_sim).toFixed(3)"></td>
+              <td class="px-2 py-2 muted" x-text="p.shared_exposure_top"></td>
+              <td class="px-2 py-2 text-right num" x-text="fmtPct(p.iv_a) + ' / ' + fmtPct(p.iv_b)"></td>
+              <td class="px-2 py-2 text-right num"
+                  :class="p.iv_spread_pts > 0 ? 'text-emerald-400' : (p.iv_spread_pts < 0 ? 'text-red-400' : '')"
+                  x-text="p.iv_spread_pts !== undefined ? (p.iv_spread_pts > 0 ? '+' : '') + p.iv_spread_pts + 'pt' : '—'"></td>
+              <td class="px-2 py-2 text-right num" x-text="fmt(p.pe_a, 'x') + ' / ' + fmt(p.pe_b, 'x')"></td>
+              <td class="px-2 py-2 text-right num" x-text="fmtB(p.mcap_a) + ' / ' + fmtB(p.mcap_b)"></td>
+              <td class="px-2 py-2 text-xs" x-text="p.suggested_trade || '—'"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TAB: Earnings próximos -->
+  <section x-show="data && tab==='earnings'" class="space-y-4">
+    <p x-show="!data.upcoming_earnings?.length" class="muted text-sm">Nenhum earnings em 4w para tickers do tema.</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+      <template x-for="e in data.upcoming_earnings" :key="e.ticker + e.fiscal_period">
+        <a :href="'/company/' + e.ticker"
+           class="block bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-emerald-500 rounded px-3 py-2">
+          <div class="flex items-baseline justify-between">
+            <span class="font-semibold" x-text="e.ticker"></span>
+            <span class="text-xs muted" x-text="e.report_date + ' · ' + (e.report_time || '—')"></span>
+          </div>
+          <div class="text-xs muted truncate" x-text="e.name + ' · ' + e.subsector"></div>
+          <div class="mt-1 text-xs">
+            <span>Fiscal <span class="font-medium" x-text="e.fiscal_period"></span></span>
+            <span class="ml-3">EPS est: <span class="font-medium" x-text="e.eps_est || '—'"></span></span>
+          </div>
+        </a>
+      </template>
+    </div>
+  </section>
+
+  <!-- TAB: Bullishness by subsector -->
+  <section x-show="data && tab==='bull'" class="bg-slate-800 border border-slate-700 rounded p-4">
+    <h2 class="text-sm font-semibold muted uppercase mb-3">Bullishness do tema por subsetor</h2>
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="muted text-xs">
+          <th class="text-left py-1">Subsetor</th>
+          <th class="text-center py-1">Bullishness</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="(b, sub) in data.bullishness_by_subsector" :key="sub">
+          <tr class="border-t border-slate-700">
+            <td class="py-1.5" x-text="sub"></td>
+            <td class="py-1.5 text-center">
+              <span :class="bullClass(b)" class="inline-block px-3 py-1 rounded text-xs font-bold" x-text="bullText(b)"></span>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('theme', () => ({
+      data: null,
+      pairs: null,
+      tab: 'tickers',
+      minScore: 20,
+      topN: 30,
+      tabs: [
+        { id: 'tickers',  label: 'Tickers expostos' },
+        { id: 'basket',   label: 'Basket (equal-weight)' },
+        { id: 'pairs',    label: 'Pair trades intra-tema' },
+        { id: 'earnings', label: 'Earnings próximos' },
+        { id: 'bull',     label: 'Bullishness matriz' },
+      ],
+
+      themeId() { return location.pathname.split('/').pop(); },
+
+      async load() {
+        const r = await fetch(`/api/theme/${this.themeId()}?min_score=${this.minScore}&top_n=${this.topN}`);
+        if (!r.ok) { document.body.innerHTML = '<pre class="p-6">Tema não encontrado</pre>'; return; }
+        this.data = await r.json();
+        document.title = this.data.theme.name + ' · Theme';
+        this.loadPairs();
+      },
+      async loadPairs() {
+        const r = await fetch(`/api/theme/${this.themeId()}/pairs?min_score=40&top_n=15`);
+        this.pairs = r.ok ? await r.json() : { pairs: [] };
+      },
+      async setDirection(t, direction) {
+        const r = await fetch('/api/override/direction', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ theme_id: this.themeId(), ticker: t.ticker, direction }),
+        });
+        if (r.ok) this.load();
+      },
+
+      bullClass(b) {
+        if (b === 2)  return 'chip-bull-2';
+        if (b === 1)  return 'chip-bull-1';
+        if (b === -1) return 'chip-bull-n1';
+        if (b === -2) return 'chip-bull-n2';
+        return 'chip-bull-0';
+      },
+      bullText(b) {
+        if (b === null || b === undefined) return '—';
+        if (b === 0) return '0';
+        return (b > 0 ? '+' : '') + b;
+      },
+      dirClass(d) {
+        if (d === 1) return 'dir-long';
+        if (d === -1) return 'dir-short';
+        return 'dir-flat';
+      },
+      dirLabel(d) {
+        if (d === 1) return 'L';
+        if (d === -1) return 'S';
+        return '·';
+      },
+      fmtB(x) {
+        if (!x) return '—';
+        if (x >= 1e12) return '$' + (x/1e12).toFixed(2) + 'T';
+        if (x >= 1e9) return '$' + (x/1e9).toFixed(1) + 'B';
+        if (x >= 1e6) return '$' + (x/1e6).toFixed(0) + 'M';
+        return '$' + Math.round(x);
+      },
+      fmt(x, suffix) {
+        if (x === null || x === undefined) return '—';
+        return Number(x).toFixed(1) + (suffix || '');
+      },
+      fmtPct(x) { return (x === null || x === undefined) ? '—' : (x*100).toFixed(1) + '%'; },
+      colorPct(x) {
+        if (x === null || x === undefined) return '';
+        return x > 0 ? 'text-emerald-400' : (x < 0 ? 'text-red-400' : '');
+      },
+      ivRv(t) {
+        if (!t.iv_30d_atm || !t.rv_30d) return '—';
+        return (t.iv_30d_atm / t.rv_30d).toFixed(2) + 'x';
+      },
+    }));
+  });
+</script>
+</body>
+</html>

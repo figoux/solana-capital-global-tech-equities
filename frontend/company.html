@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Company — Solana Global Tech</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    body { font-family: -apple-system, "Inter", sans-serif; }
+    .muted { color: #6b7280; }
+    .num { font-variant-numeric: tabular-nums; }
+    .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 13px; }
+    .kv dt { color: #9ca3af; }
+    .kv dd { text-align: right; font-variant-numeric: tabular-nums; }
+    /* Exposure grid por categoria */
+    .exp-cat-title {
+      font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: #9ca3af; border-bottom: 1px solid #334155; padding-bottom: 2px; margin-bottom: 4px;
+    }
+    .exp-bar { height: 6px; background: #0f172a; border-radius: 3px; position: relative; }
+    .exp-bar > div { height: 6px; border-radius: 3px; background: #10b981; }
+    /* Comparative matrix — heatmap style ticker × bucket */
+    .mx-cell { font-size: 11px; text-align: center; padding: 4px 6px; font-variant-numeric: tabular-nums; }
+    .mx-focal { background: #064e3b; }
+    .mx-header th { font-size: 11px; padding: 4px 6px; }
+    .mx-cat-band {
+      background: #1e293b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+      color: #9ca3af; padding: 4px 8px; text-align: left;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+
+<div x-data="company" x-init="load()" class="max-w-screen-xl mx-auto p-6">
+
+  <nav class="mb-6 flex items-center justify-between">
+    <a href="/" class="text-sm muted hover:text-emerald-400">← Dashboard</a>
+    <span class="text-xs muted" x-text="data?.company ? data.company.country + ' · ' + data.company.currency : ''"></span>
+  </nav>
+
+  <!-- Header card -->
+  <header x-show="data?.company" class="mb-6">
+    <div class="flex items-baseline gap-3">
+      <h1 class="text-3xl font-bold" x-text="data?.company?.ticker"></h1>
+      <span class="text-lg text-slate-300" x-text="data?.company?.name"></span>
+      <span class="ml-auto text-xs px-2 py-1 rounded bg-slate-800 muted" x-text="data?.company?.subsector"></span>
+    </div>
+  </header>
+
+  <div x-show="!data?.company" class="muted">Carregando…</div>
+
+  <!-- 3-col layout -->
+  <div x-show="data?.company" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+    <!-- Col 1: Multiples -->
+    <section class="bg-slate-800 border border-slate-700 rounded p-4">
+      <h2 class="text-sm font-semibold muted uppercase mb-3">Valuation snapshot</h2>
+      <dl class="kv" x-show="data?.multiples">
+        <dt>Mkt cap</dt><dd x-text="fmtB(data?.multiples?.mkt_cap_usd)"></dd>
+        <dt>EV</dt><dd x-text="fmtB(data?.multiples?.ev_usd)"></dd>
+        <dt>P/E TTM</dt><dd x-text="fmt(data?.multiples?.pe_ttm, 'x')"></dd>
+        <dt>Fwd P/E NTM</dt><dd x-text="fmt(data?.multiples?.fwd_pe_ntm, 'x')"></dd>
+        <dt>Fwd P/E FY1</dt><dd x-text="fmt(data?.multiples?.fwd_pe_fy1, 'x')"></dd>
+        <dt>Fwd P/E FY2</dt><dd x-text="fmt(data?.multiples?.fwd_pe_fy2, 'x')"></dd>
+        <dt>P/S NTM</dt><dd x-text="fmt(data?.multiples?.ps_ntm, 'x')"></dd>
+        <dt>PEG NTM</dt><dd x-text="fmt(data?.multiples?.peg_ntm, 'x')"></dd>
+        <dt>EPS growth FY1</dt><dd :class="colorPct(data?.multiples?.eps_growth_fy1)" x-text="fmtPct(data?.multiples?.eps_growth_fy1)"></dd>
+        <dt>EPS growth FY2</dt><dd :class="colorPct(data?.multiples?.eps_growth_fy2)" x-text="fmtPct(data?.multiples?.eps_growth_fy2)"></dd>
+        <dt>Rev growth FY1</dt><dd :class="colorPct(data?.multiples?.rev_growth_fy1)" x-text="fmtPct(data?.multiples?.rev_growth_fy1)"></dd>
+        <dt>Div yield</dt><dd x-text="fmtPct(data?.multiples?.dividend_yield)"></dd>
+      </dl>
+      <p x-show="!data?.multiples" class="muted text-sm">Sem snapshot de múltiplos.</p>
+    </section>
+
+    <!-- Col 2: Next earnings + estimates -->
+    <section class="bg-slate-800 border border-slate-700 rounded p-4">
+      <h2 class="text-sm font-semibold muted uppercase mb-3">Next earnings</h2>
+      <div x-show="data?.next_earnings" class="mb-4 p-3 bg-slate-900 rounded border border-emerald-800">
+        <div class="text-lg font-bold" x-text="data?.next_earnings?.report_date + ' · ' + data?.next_earnings?.report_time"></div>
+        <div class="text-xs muted" x-text="'Period: ' + data?.next_earnings?.fiscal_period"></div>
+        <div class="mt-2 text-sm">
+          <span>EPS est: <span class="font-medium" x-text="data?.next_earnings?.eps_est || '—'"></span></span>
+          <span class="ml-4">Rev est: <span class="font-medium" x-text="fmtB(data?.next_earnings?.rev_est)"></span></span>
+        </div>
+      </div>
+      <p x-show="!data?.next_earnings" class="muted text-sm mb-4">Sem evento agendado.</p>
+
+      <h2 class="text-sm font-semibold muted uppercase mb-2">Consensus estimates</h2>
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="muted">
+            <th class="text-left py-1">Period</th>
+            <th class="text-right">EPS mean</th>
+            <th class="text-right">Rev mean</th>
+            <th class="text-right"># an.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="e in data?.estimates || []" :key="e.fiscal_period">
+            <tr class="border-t border-slate-700">
+              <td class="py-1" x-text="e.fiscal_period"></td>
+              <td class="text-right" x-text="e.eps_mean ? Number(e.eps_mean).toFixed(2) : '—'"></td>
+              <td class="text-right" x-text="fmtB(e.revenue_mean)"></td>
+              <td class="text-right muted" x-text="e.eps_count || '—'"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Col 3: Themes + exposures + vol -->
+    <section class="bg-slate-800 border border-slate-700 rounded p-4">
+      <h2 class="text-sm font-semibold muted uppercase mb-3">Themes tagging</h2>
+      <div class="flex flex-wrap gap-1 mb-4">
+        <template x-for="t in data?.themes || []" :key="t.theme_id">
+          <span class="text-xs bg-emerald-900 text-emerald-200 px-2 py-1 rounded"
+                x-text="t.name + ' · ' + t.exposure"></span>
+        </template>
+        <span x-show="(data?.themes || []).length===0" class="muted text-xs">Nenhum tema tagueado — edite em breve.</span>
+      </div>
+
+      <h2 class="text-sm font-semibold muted uppercase mb-3">Business exposures por categoria</h2>
+      <div x-show="(data?.exposures || []).length === 0" class="muted text-xs mb-4">Sem exposure registrada.</div>
+      <div x-show="(data?.exposures || []).length > 0" class="space-y-3">
+        <template x-for="(items, cat) in exposuresByCategory()" :key="cat">
+          <div>
+            <div class="exp-cat-title" x-text="cat"></div>
+            <div class="space-y-1">
+              <template x-for="e in items" :key="e.exposure_id">
+                <div class="flex items-center gap-2 text-xs">
+                  <div class="w-28 truncate" :title="e.name" x-text="e.name"></div>
+                  <div class="flex-1 exp-bar">
+                    <div :style="'width:' + Math.min(100, e.weight_pct) + '%'"></div>
+                  </div>
+                  <div class="w-10 text-right num" x-text="e.weight_pct + '%'"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <h2 class="text-sm font-semibold muted uppercase mt-4 mb-2">Volatility</h2>
+      <div x-show="data?.volatility" class="text-xs">
+        <dl class="kv">
+          <dt>RV 30d</dt><dd x-text="fmtPct(data?.volatility?.rv_30d)"></dd>
+          <dt>IV 30d ATM</dt><dd x-text="fmtPct(data?.volatility?.iv_30d_atm)"></dd>
+          <dt>IV skew 25d</dt><dd x-text="fmt(data?.volatility?.iv_skew_25d, '')"></dd>
+          <dt>Source</dt><dd x-text="data?.volatility?.source + (data?.volatility?.locked ? ' 🔒' : '')"></dd>
+        </dl>
+      </div>
+      <p x-show="!data?.volatility" class="muted text-xs">Sem snapshot de vol (ETL pending).</p>
+    </section>
+
+  </div>
+
+  <!-- Comparative exposures matrix (ticker × top peers) -->
+  <section x-show="data?.company && exp" class="mt-6 bg-slate-800 border border-slate-700 rounded p-4">
+    <div class="flex items-baseline justify-between mb-3">
+      <h2 class="text-sm font-semibold muted uppercase">Exposures vs peers · matriz</h2>
+      <span class="text-xs muted">
+        Focal + top <span x-text="exp && (exp.tickers.length - 1)"></span> peers por cosine sim · cell value = weight % no bucket
+      </span>
+    </div>
+    <div x-show="!exp" class="muted text-sm">Carregando matriz…</div>
+    <div x-show="exp" class="overflow-x-auto">
+      <table class="text-xs" style="border-collapse: separate; border-spacing: 0;">
+        <thead class="mx-header">
+          <tr>
+            <th class="text-left px-3 py-2 sticky left-0 bg-slate-800">Bucket</th>
+            <template x-for="t in exp?.tickers || []" :key="t">
+              <th class="text-center px-2 py-2" :class="t === exp.focal.ticker ? 'text-emerald-400 font-bold' : ''">
+                <div x-text="t"></div>
+                <div class="muted text-[10px]"
+                     x-text="t === exp.focal.ticker ? 'FOCAL' : (exp.cosine_map[t] !== undefined ? Number(exp.cosine_map[t]).toFixed(2) : '')"></div>
+              </th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="row in matrixRows()" :key="row.key">
+            <tr :class="row.type === 'bucket' ? 'border-t border-slate-700' : ''">
+              <td x-show="row.type === 'cat'" class="mx-cat-band"
+                  :colspan="(exp?.tickers?.length || 0) + 1" x-text="row.cat"></td>
+              <td x-show="row.type === 'bucket'" class="px-3 py-1 text-left" x-text="row.bucket?.name"></td>
+              <template x-for="t in exp?.tickers || []" :key="t">
+                <td x-show="row.type === 'bucket'" class="mx-cell"
+                    :class="[t === exp.focal.ticker ? 'mx-focal' : '', bgFor(exp.weights[row.bucket?.exposure_id]?.[t] || 0)]"
+                    x-text="row.bucket && (exp.weights[row.bucket.exposure_id]?.[t] || 0) > 0 ? exp.weights[row.bucket.exposure_id][t] : ''"></td>
+              </template>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+    <p class="mt-2 text-[11px] muted">
+      Verde mais forte = peso maior. Coluna destacada = ticker focal. Número em cada célula é o weight_pct (0-100).
+    </p>
+  </section>
+
+  <!-- Pair candidates (cosine similarity peers) -->
+  <section x-show="data?.company" class="mt-6 bg-slate-800 border border-slate-700 rounded p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-semibold muted uppercase">Pair candidates · cosine similarity peers</h2>
+      <span class="text-xs muted" x-text="pairs ? (pairs.peers.length + ' peers · focal IV/RV: ' + (pairs.focal.iv_rv_ratio || '—')) : ''"></span>
+    </div>
+    <div x-show="!pairs" class="muted text-sm">Carregando…</div>
+    <div x-show="pairs && pairs.peers.length === 0" class="muted text-sm">Nenhum peer acima do threshold de similaridade.</div>
+    <div x-show="pairs && pairs.peers.length > 0" class="overflow-x-auto">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="muted">
+            <th class="text-left py-1">Peer</th>
+            <th class="text-left py-1">Subsetor</th>
+            <th class="text-right py-1">Cosine</th>
+            <th class="text-left py-1">Overlap top</th>
+            <th class="text-right py-1">Mkt cap</th>
+            <th class="text-right py-1">P/E FY1</th>
+            <th class="text-right py-1">IV 30d</th>
+            <th class="text-right py-1">IV spread</th>
+            <th class="text-right py-1">RV spread</th>
+            <th class="text-right py-1">IV/RV</th>
+            <th class="text-left py-1">Próx. EPS</th>
+            <th class="text-right py-1">Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="p in pairs.peers" :key="p.ticker">
+            <tr class="border-t border-slate-700 hover:bg-slate-900">
+              <td class="py-1.5">
+                <a :href="'/company/' + p.ticker" class="font-semibold hover:text-emerald-400" x-text="p.ticker"></a>
+                <div class="muted text-[10px] truncate max-w-xs" x-text="p.name"></div>
+              </td>
+              <td class="py-1.5 muted" x-text="p.subsector"></td>
+              <td class="py-1.5 text-right num" x-text="Number(p.cosine_sim).toFixed(3)"></td>
+              <td class="py-1.5 muted text-[11px]" x-text="p.shared_exposure_top || '—'"></td>
+              <td class="py-1.5 text-right num" x-text="fmtB(p.mkt_cap_usd)"></td>
+              <td class="py-1.5 text-right num" x-text="fmt(p.fwd_pe_fy1, 'x')"></td>
+              <td class="py-1.5 text-right num" x-text="fmtPct(p.iv_30d_atm)"></td>
+              <td class="py-1.5 text-right num"
+                  :class="p.iv_spread_pts > 0 ? 'text-emerald-400' : (p.iv_spread_pts < 0 ? 'text-red-400' : '')"
+                  x-text="p.iv_spread_pts !== undefined ? (p.iv_spread_pts > 0 ? '+' : '') + p.iv_spread_pts + 'pt' : '—'"></td>
+              <td class="py-1.5 text-right num" x-text="p.rv_spread_pts !== undefined ? (p.rv_spread_pts > 0 ? '+' : '') + p.rv_spread_pts + 'pt' : '—'"></td>
+              <td class="py-1.5 text-right num" x-text="p.iv_rv_ratio !== undefined ? p.iv_rv_ratio + 'x' : '—'"></td>
+              <td class="py-1.5 muted text-[11px]" x-text="p.next_earnings_date || '—'"></td>
+              <td class="py-1.5 text-right">
+                <a :href="'/pair/' + data.company.ticker + '/' + p.ticker"
+                   class="text-xs bg-emerald-700 hover:bg-emerald-600 px-2 py-1 rounded">Pair →</a>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+    <p class="mt-2 text-[11px] muted">
+      IV spread positivo = peer mais caro em vol (candidato a short vol vs focal). RV spread = diferença realized. IV/RV > 1 = IV premium sobre realized.
+    </p>
+  </section>
+
+</div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('company', () => ({
+      data: null,
+      pairs: null,
+      exp: null,
+      async load() {
+        const t = location.pathname.split('/').pop();
+        const r = await fetch('/api/company/' + t);
+        if (!r.ok) { document.body.innerHTML = '<pre class="p-6">' + t + ' not found</pre>'; return; }
+        this.data = await r.json();
+        document.title = this.data.company.ticker + ' · ' + this.data.company.name;
+        this.loadPairs(t);
+        this.loadExp(t);
+      },
+      async loadPairs(t) {
+        const r = await fetch('/api/pairs/' + t + '?top_n=10');
+        this.pairs = r.ok ? await r.json() : { focal: {}, peers: [] };
+      },
+      async loadExp(t) {
+        const r = await fetch('/api/exposures-compared/' + t + '?n_peers=5');
+        this.exp = r.ok ? await r.json() : null;
+      },
+      exposuresByCategory() {
+        const out = {};
+        const list = this.data?.exposures || [];
+        for (const e of list) {
+          const cat = e.category || 'Outros';
+          (out[cat] ||= []).push(e);
+        }
+        // Dentro de cada categoria ordena por weight desc
+        for (const k in out) out[k].sort((a, b) => b.weight_pct - a.weight_pct);
+        return out;
+      },
+      matrixRows() {
+        if (!this.exp) return [];
+        const rows = [];
+        for (const cat of this.exp.categories || []) {
+          rows.push({ type: 'cat', cat, key: 'cat_' + cat });
+          for (const b of this.exp.buckets_by_category[cat] || []) {
+            rows.push({ type: 'bucket', bucket: b, key: 'b_' + b.exposure_id });
+          }
+        }
+        return rows;
+      },
+      bgFor(weight) {
+        if (!weight || weight <= 0) return '';
+        if (weight >= 70) return 'bg-emerald-600';
+        if (weight >= 40) return 'bg-emerald-700';
+        if (weight >= 20) return 'bg-emerald-800';
+        if (weight >= 10) return 'bg-emerald-900';
+        return 'bg-emerald-950';
+      },
+      fmt(x, suffix) {
+        if (x === null || x === undefined) return '—';
+        return Number(x).toFixed(2) + (suffix || '');
+      },
+      fmtPct(x) { return (x === null || x === undefined) ? '—' : (x*100).toFixed(1) + '%'; },
+      fmtB(x) {
+        if (!x) return '—';
+        if (x >= 1e12) return '$' + (x/1e12).toFixed(2) + 'T';
+        if (x >= 1e9)  return '$' + (x/1e9).toFixed(1) + 'B';
+        if (x >= 1e6)  return '$' + (x/1e6).toFixed(0) + 'M';
+        return '$' + Math.round(x);
+      },
+      colorPct(x) {
+        if (x === null || x === undefined) return '';
+        return x > 0 ? 'text-emerald-400' : (x < 0 ? 'text-red-400' : '');
+      },
+    }));
+  });
+</script>
+</body>
+</html>

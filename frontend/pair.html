@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pair — Solana Global Tech</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    body { font-family: -apple-system, "Inter", sans-serif; }
+    .muted { color: #6b7280; }
+    .num   { font-variant-numeric: tabular-nums; }
+    .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 13px; }
+    .kv dt { color: #9ca3af; }
+    .kv dd { text-align: right; font-variant-numeric: tabular-nums; }
+    .bar-row { display: grid; grid-template-columns: 1fr 140px 1fr; gap: 4px; align-items: center; }
+    .bar-l, .bar-r { height: 10px; background: #0f172a; border-radius: 3px; position: relative; }
+    .bar-l > div { position: absolute; right: 0; top: 0; bottom: 0; background: #10b981; border-radius: 3px; }
+    .bar-r > div { position: absolute; left: 0; top: 0; bottom: 0; background: #60a5fa; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+
+<div x-data="pair" x-init="load()" class="max-w-screen-xl mx-auto p-6">
+
+  <!-- Nav -->
+  <nav class="mb-4 flex items-center justify-between">
+    <a href="/" class="text-sm muted hover:text-emerald-400">← Dashboard</a>
+    <div class="flex gap-3 text-xs">
+      <a x-show="data" :href="'/company/' + (data?.a?.ticker || '')" class="muted hover:text-emerald-400" x-text="'Company · ' + (data?.a?.ticker || '')"></a>
+      <a x-show="data" :href="'/company/' + (data?.b?.ticker || '')" class="muted hover:text-emerald-400" x-text="'Company · ' + (data?.b?.ticker || '')"></a>
+    </div>
+  </nav>
+
+  <div x-show="!data" class="muted">Carregando par…</div>
+
+  <!-- Header -->
+  <header x-show="data" class="mb-6 border-b border-slate-700 pb-4">
+    <div class="flex items-baseline gap-3">
+      <h1 class="text-3xl font-bold">
+        <span class="text-emerald-400" x-text="data?.a?.ticker"></span>
+        <span class="muted mx-2">×</span>
+        <span class="text-blue-400" x-text="data?.b?.ticker"></span>
+      </h1>
+      <span class="ml-auto text-sm muted">
+        <span>Cosine sim:</span>
+        <span class="text-slate-200 font-mono" x-text="data?.cosine_sim !== null && data?.cosine_sim !== undefined ? Number(data.cosine_sim).toFixed(3) : '—'"></span>
+      </span>
+    </div>
+    <div class="mt-1 text-sm muted">
+      <span x-text="(data?.a?.name || '') + ' (' + (data?.a?.subsector || '') + ')'"></span>
+      <span class="mx-2">vs</span>
+      <span x-text="(data?.b?.name || '') + ' (' + (data?.b?.subsector || '') + ')'"></span>
+    </div>
+  </header>
+
+  <!-- Side-by-side stats -->
+  <section x-show="data" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="bg-slate-800 border border-emerald-900 rounded p-4">
+      <h2 class="text-emerald-400 font-bold text-lg" x-text="data?.a?.ticker + ' · stats'"></h2>
+      <dl class="kv mt-2">
+        <dt>Mkt cap</dt><dd x-text="fmtB(data?.a?.mkt_cap_usd)"></dd>
+        <dt>Próx. EPS</dt><dd x-text="data?.a?.next_earnings_date || '—'"></dd>
+        <dt>Fwd P/E NTM</dt><dd x-text="fmt(data?.a?.fwd_pe_ntm, 'x')"></dd>
+        <dt>Fwd P/E FY1</dt><dd x-text="fmt(data?.a?.fwd_pe_fy1, 'x')"></dd>
+        <dt>Fwd P/E FY2</dt><dd x-text="fmt(data?.a?.fwd_pe_fy2, 'x')"></dd>
+        <dt>EPS gr FY1</dt><dd :class="colorPct(data?.a?.eps_growth_fy1)" x-text="fmtPct(data?.a?.eps_growth_fy1)"></dd>
+        <dt>Rev gr FY1</dt><dd :class="colorPct(data?.a?.rev_growth_fy1)" x-text="fmtPct(data?.a?.rev_growth_fy1)"></dd>
+        <dt>PEG NTM</dt><dd x-text="fmt(data?.a?.peg_ntm, 'x')"></dd>
+        <dt>RV 30d</dt><dd x-text="fmtPct(data?.a?.rv_30d)"></dd>
+        <dt>RV 60d</dt><dd x-text="fmtPct(data?.a?.rv_60d)"></dd>
+        <dt>IV 30d ATM</dt><dd x-text="fmtPct(data?.a?.iv_30d_atm)"></dd>
+        <dt>IV 60d ATM</dt><dd x-text="fmtPct(data?.a?.iv_60d_atm)"></dd>
+        <dt>IV skew 25d</dt><dd x-text="fmtSkew(data?.a?.iv_skew_25d)"></dd>
+        <dt>IV/RV ratio</dt><dd x-text="ivRv(data?.a)"></dd>
+      </dl>
+    </div>
+
+    <div class="bg-slate-800 border border-blue-900 rounded p-4">
+      <h2 class="text-blue-400 font-bold text-lg" x-text="data?.b?.ticker + ' · stats'"></h2>
+      <dl class="kv mt-2">
+        <dt>Mkt cap</dt><dd x-text="fmtB(data?.b?.mkt_cap_usd)"></dd>
+        <dt>Próx. EPS</dt><dd x-text="data?.b?.next_earnings_date || '—'"></dd>
+        <dt>Fwd P/E NTM</dt><dd x-text="fmt(data?.b?.fwd_pe_ntm, 'x')"></dd>
+        <dt>Fwd P/E FY1</dt><dd x-text="fmt(data?.b?.fwd_pe_fy1, 'x')"></dd>
+        <dt>Fwd P/E FY2</dt><dd x-text="fmt(data?.b?.fwd_pe_fy2, 'x')"></dd>
+        <dt>EPS gr FY1</dt><dd :class="colorPct(data?.b?.eps_growth_fy1)" x-text="fmtPct(data?.b?.eps_growth_fy1)"></dd>
+        <dt>Rev gr FY1</dt><dd :class="colorPct(data?.b?.rev_growth_fy1)" x-text="fmtPct(data?.b?.rev_growth_fy1)"></dd>
+        <dt>PEG NTM</dt><dd x-text="fmt(data?.b?.peg_ntm, 'x')"></dd>
+        <dt>RV 30d</dt><dd x-text="fmtPct(data?.b?.rv_30d)"></dd>
+        <dt>RV 60d</dt><dd x-text="fmtPct(data?.b?.rv_60d)"></dd>
+        <dt>IV 30d ATM</dt><dd x-text="fmtPct(data?.b?.iv_30d_atm)"></dd>
+        <dt>IV 60d ATM</dt><dd x-text="fmtPct(data?.b?.iv_60d_atm)"></dd>
+        <dt>IV skew 25d</dt><dd x-text="fmtSkew(data?.b?.iv_skew_25d)"></dd>
+        <dt>IV/RV ratio</dt><dd x-text="ivRv(data?.b)"></dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- Trade structuring / ratios -->
+  <section x-show="data" class="mb-6 bg-slate-800 border border-slate-700 rounded p-4">
+    <h2 class="text-sm font-semibold muted uppercase mb-3">Pair structuring</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+      <div class="bg-slate-900 rounded p-3">
+        <div class="text-xs muted">IV spread (A − B)</div>
+        <div class="text-xl font-bold num mt-1"
+             :class="ivSpreadColor()"
+             x-text="data?.ratios?.iv_spread_pts !== undefined ? (data.ratios.iv_spread_pts > 0 ? '+' : '') + data.ratios.iv_spread_pts + 'pt' : '—'"></div>
+        <div class="text-xs muted mt-1" x-text="ivSpreadHint()"></div>
+      </div>
+      <div class="bg-slate-900 rounded p-3">
+        <div class="text-xs muted">Vol-neutral ratio (A/B)</div>
+        <div class="text-xl font-bold num mt-1" x-text="data?.ratios?.vol_neutral_ratio ?? '—'"></div>
+        <div class="text-xs muted mt-1">$ notional A × ratio = $ notional B pra vol-neutro</div>
+      </div>
+      <div class="bg-slate-900 rounded p-3">
+        <div class="text-xs muted">P/E FY1 spread</div>
+        <div class="text-xl font-bold num mt-1"
+             :class="data?.ratios?.pe_spread > 0 ? 'text-emerald-400' : (data?.ratios?.pe_spread < 0 ? 'text-red-400' : '')"
+             x-text="data?.ratios?.pe_spread !== undefined ? (data.ratios.pe_spread > 0 ? '+' : '') + data.ratios.pe_spread + 'x' : '—'"></div>
+        <div class="text-xs muted mt-1">A mais caro que B se positivo</div>
+      </div>
+      <div class="bg-slate-900 rounded p-3">
+        <div class="text-xs muted">Mkt cap ratio (A/B)</div>
+        <div class="text-xl font-bold num mt-1" x-text="data?.ratios?.mcap_ratio ?? '—'"></div>
+        <div class="text-xs muted mt-1">Dollar-neutral sizing reference</div>
+      </div>
+    </div>
+
+    <div class="mt-4 p-3 rounded border border-emerald-700 bg-emerald-950/40 text-sm" x-show="data?.ratios?.iv_spread_pts !== undefined">
+      <div class="muted text-xs uppercase mb-1">Sugestão (long cheap IV / short rich IV)</div>
+      <div class="font-semibold" x-text="suggestedTrade()"></div>
+      <div class="text-xs muted mt-1" x-text="suggestedSizing()"></div>
+    </div>
+  </section>
+
+  <!-- Exposures overlap -->
+  <section x-show="data" class="mb-6 bg-slate-800 border border-slate-700 rounded p-4">
+    <h2 class="text-sm font-semibold muted uppercase mb-3">Business exposures — overlap</h2>
+    <p class="text-xs muted mb-3">Pesos em % do revenue/exposição. Overlap = min(A, B). Ordenado por overlap desc.</p>
+    <div class="space-y-2 text-xs">
+      <template x-for="e in data?.exposures_compared || []" :key="e.exposure_id">
+        <div class="bar-row">
+          <div class="bar-l"><div :style="'width:' + (e.weight_a || 0) + '%'"></div></div>
+          <div class="text-center">
+            <div class="font-medium" x-text="e.name"></div>
+            <div class="muted num" x-text="(e.weight_a || 0) + '  /  ' + (e.weight_b || 0)"></div>
+          </div>
+          <div class="bar-r"><div :style="'width:' + (e.weight_b || 0) + '%'"></div></div>
+        </div>
+      </template>
+      <p x-show="(data?.exposures_compared || []).length === 0" class="muted">Nenhuma exposição gravada.</p>
+    </div>
+    <div class="mt-3 flex gap-6 text-xs">
+      <span class="flex items-center gap-2"><span class="inline-block w-4 h-2 bg-emerald-500 rounded"></span>
+        <span x-text="data?.a?.ticker"></span></span>
+      <span class="flex items-center gap-2"><span class="inline-block w-4 h-2 bg-blue-400 rounded"></span>
+        <span x-text="data?.b?.ticker"></span></span>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('pair', () => ({
+      data: null,
+
+      async load() {
+        const parts = location.pathname.split('/').filter(Boolean);
+        const a = parts[parts.length - 2];
+        const b = parts[parts.length - 1];
+        const r = await fetch(`/api/pair/${a}/${b}`);
+        if (!r.ok) { document.body.innerHTML = '<pre class="p-6">Par não encontrado</pre>'; return; }
+        this.data = await r.json();
+        document.title = this.data.a.ticker + ' × ' + this.data.b.ticker;
+      },
+      ivSpreadColor() {
+        const s = this.data?.ratios?.iv_spread_pts;
+        if (s === undefined) return '';
+        return s > 0 ? 'text-emerald-400' : (s < 0 ? 'text-red-400' : '');
+      },
+      ivSpreadHint() {
+        const s = this.data?.ratios?.iv_spread_pts;
+        if (s === undefined) return '';
+        if (Math.abs(s) < 1) return 'Spread pequeno — pouca assimetria de vol';
+        return s > 0 ? 'A mais caro em vol' : 'B mais caro em vol';
+      },
+      suggestedTrade() {
+        const d = this.data;
+        if (!d) return '';
+        const s = d.ratios?.iv_spread_pts;
+        if (s === undefined || Math.abs(s) < 1) return 'Sem assimetria IV relevante — considerar fundamentals/cosine';
+        const cheap = s > 0 ? d.b.ticker : d.a.ticker;
+        const rich  = s > 0 ? d.a.ticker : d.b.ticker;
+        return `Long ${cheap} vol / Short ${rich} vol`;
+      },
+      suggestedSizing() {
+        const d = this.data;
+        if (!d || !d.ratios?.vol_neutral_ratio || !d.ratios?.mcap_ratio) return '';
+        return `Vol-neutral ratio = ${d.ratios.vol_neutral_ratio}  ·  Mcap ratio = ${d.ratios.mcap_ratio}`;
+      },
+      fmtB(x) {
+        if (!x) return '—';
+        if (x >= 1e12) return '$' + (x/1e12).toFixed(2) + 'T';
+        if (x >= 1e9)  return '$' + (x/1e9).toFixed(1) + 'B';
+        if (x >= 1e6)  return '$' + (x/1e6).toFixed(0) + 'M';
+        return '$' + Math.round(x);
+      },
+      fmt(x, suffix) {
+        if (x === null || x === undefined) return '—';
+        return Number(x).toFixed(2) + (suffix || '');
+      },
+      fmtPct(x) { return (x === null || x === undefined) ? '—' : (x*100).toFixed(1) + '%'; },
+      fmtSkew(x) {
+        if (x === null || x === undefined) return '—';
+        return (x > 0 ? '+' : '') + (x * 100).toFixed(1) + 'pt';
+      },
+      colorPct(x) {
+        if (x === null || x === undefined) return '';
+        return x > 0 ? 'text-emerald-400' : (x < 0 ? 'text-red-400' : '');
+      },
+      ivRv(t) {
+        if (!t?.iv_30d_atm || !t?.rv_30d) return '—';
+        return (t.iv_30d_atm / t.rv_30d).toFixed(2) + 'x';
+      },
+    }));
+  });
+</script>
+</body>
+</html>

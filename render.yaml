@@ -1,0 +1,31 @@
+# Render Blueprint — Solana Global Tech
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Apos dar push do repo:
+#   1. Em render.com -> New + -> Blueprint -> conectar repo GitHub
+#   2. Render le esse arquivo e propoe o servico web
+#   3. Antes do deploy, setar em "Environment":
+#        DASHBOARD_PASSWORD = <seu token forte>
+#   4. Deploy. URL final: https://solana-tech.onrender.com
+#
+# ETL NAO roda aqui — continua no laptop do Filipe.
+# Fluxo de update: rodar seeds local -> git add backend/db/dashboard.db -> commit -> push.
+# Render auto-deploya em ~2 min.
+
+services:
+  - type: web
+    name: solana-tech
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn backend.api.server:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: "/health"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.4"
+      - key: DASHBOARD_USER
+        value: "solana"
+      - key: DASHBOARD_PASSWORD
+        sync: false  # setar manualmente no dashboard Render

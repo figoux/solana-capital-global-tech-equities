@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Solana Global Tech — Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    body { font-family: -apple-system, "Inter", sans-serif; }
+    .cell { min-width: 60px; height: 34px; }
+    /* Bullishness colors (dark bg to contrast fund night mode) */
+    .b2  { background: #14532d; color: #f0fdf4; }  /* dark green */
+    .b1  { background: #22c55e; color: #14532d; }  /* light green */
+    .b0  { background: #1f2937; color: #9ca3af; }  /* neutral */
+    .bn1 { background: #ef4444; color: #450a0a; }  /* light red */
+    .bn2 { background: #7f1d1d; color: #fee2e2; }  /* dark red */
+    .cat-badge { font-size: 10px; letter-spacing: 0.05em; }
+    .muted { color: #6b7280; }
+    /* Ticker overlay */
+    .col-highlight { box-shadow: inset 0 0 0 2px #f59e0b; }
+    .cell-dot { position: relative; }
+    .cell-dot::after {
+      content: ''; position: absolute; top: 3px; right: 3px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,0.35);
+    }
+    .cell-dot-strong::after {
+      width: 10px; height: 10px; background: #fbbf24;
+      box-shadow: 0 0 0 3px rgba(251,191,36,0.5);
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+
+<div x-data="dashboard" x-init="load()" class="max-w-screen-2xl mx-auto p-6">
+
+  <!-- Header -->
+  <header class="flex items-end justify-between mb-6 border-b border-slate-700 pb-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Solana Global Tech</h1>
+      <p class="muted text-sm" x-text="headerInfo()"></p>
+    </div>
+    <div class="text-right text-xs muted">
+      <span x-text="'DB: ' + (stats.prices_latest || '—')"></span><br>
+      <span x-text="stats.companies + ' cos · ' + stats.events + ' earnings upcoming'"></span>
+    </div>
+  </header>
+
+  <!-- Quick ticker search -->
+  <div class="mb-6 flex gap-2">
+    <input x-model="tickerQuery" @keydown.enter="goTicker()" type="text" placeholder="Go to ticker (ex: NVDA)..."
+           class="flex-1 bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" />
+    <button @click="goTicker()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded text-sm font-medium">Open →</button>
+  </div>
+
+  <!-- Heatmap -->
+  <section class="mb-8">
+    <div class="flex items-end justify-between mb-3 gap-4 flex-wrap">
+      <h2 class="text-lg font-semibold">Themes × Subsectors bullishness</h2>
+      <div class="flex items-center gap-2 text-xs">
+        <span class="muted">Focal ticker (overlay):</span>
+        <input x-model="focalTicker"
+               @keydown.enter="loadFocal()"
+               @input.debounce.400ms="loadFocal()"
+               placeholder="ex: NVDA"
+               class="w-24 bg-slate-800 border border-slate-700 rounded px-2 py-1 uppercase" />
+        <button x-show="focalData" @click="focalTicker=''; focalData=null"
+                class="muted hover:text-red-400">✕ limpar</button>
+        <span x-show="focalData" class="ml-2 muted">
+          <span class="text-amber-400 font-semibold" x-text="focalData?.ticker"></span>
+          · subsetor: <span x-text="focalData?.subsector"></span>
+        </span>
+      </div>
+    </div>
+    <div class="overflow-x-auto border border-slate-800 rounded">
+      <table class="text-xs">
+        <thead>
+          <tr class="bg-slate-800">
+            <th class="text-left px-3 py-2 sticky left-0 bg-slate-800 z-10">Theme</th>
+            <template x-for="s in heatmap.subsectors" :key="s">
+              <th class="px-2 py-2 text-center"
+                  :class="focalData && focalData.subsector===s ? 'col-highlight bg-amber-950/60' : ''">
+                <div class="font-semibold" x-text="s"></div>
+                <div class="muted" x-text="'(' + (heatmap.subsector_counts[s] || 0) + ')'"></div>
+              </th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="t in heatmap.themes" :key="t.theme_id">
+            <tr class="border-t border-slate-800 hover:bg-slate-850">
+              <td class="px-3 py-2 sticky left-0 bg-slate-900">
+                <a :href="'/theme/' + t.theme_id" class="block hover:text-emerald-400">
+                  <div class="font-medium" x-text="t.name"></div>
+                  <div class="cat-badge uppercase muted" x-text="t.category"></div>
+                </a>
+              </td>
+              <template x-for="s in heatmap.subsectors" :key="s">
+                <td class="cell text-center align-middle"
+                    :class="[cellClass(t.cells[s]?.b), dotClass(t.theme_id, s),
+                             focalData && focalData.subsector===s ? 'col-highlight' : '']"
+                    :title="cellTitle(t, s)">
+                  <span class="text-sm font-bold" x-text="cellText(t.cells[s]?.b)"></span>
+                </td>
+              </template>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+    <p class="mt-2 text-xs muted">
+      +2 very bullish · +1 bullish · 0 neutral · −1 bearish · −2 very bearish.
+      <span x-show="focalData">
+        🟠 dot = <span class="text-amber-400 font-semibold" x-text="focalData?.ticker"></span>
+        tem score ≥ 40 naquele tema (dot maior se ≥ 70).
+      </span>
+    </p>
+  </section>
+
+  <!-- Earnings week -->
+  <section class="mb-8">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-semibold">Upcoming earnings</h2>
+      <div class="flex gap-1 text-xs">
+        <template x-for="n in [1,2,4,8]" :key="n">
+          <button @click="weeks=n; loadEarnings()"
+                  :class="weeks===n ? 'bg-emerald-600' : 'bg-slate-800 hover:bg-slate-700'"
+                  class="px-2 py-1 rounded" x-text="n + 'w'"></button>
+        </template>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <template x-for="(bucket, dateKey) in groupedEarnings()" :key="dateKey">
+        <div>
+          <h3 class="text-sm font-semibold muted mb-2" x-text="formatDay(dateKey) + ' · ' + bucket.length + ' reports'"></h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            <template x-for="e in bucket" :key="e.ticker">
+              <a :href="'/company/' + e.ticker"
+                 class="block bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-emerald-500 rounded px-3 py-2">
+                <div class="flex items-baseline justify-between">
+                  <span class="font-semibold" x-text="e.ticker"></span>
+                  <span class="text-xs muted" x-text="e.report_time"></span>
+                </div>
+                <div class="text-xs muted truncate" x-text="e.name + ' · ' + e.subsector"></div>
+                <div class="mt-1 flex justify-between text-xs">
+                  <span x-text="e.mkt_cap_usd ? ('$' + fmtB(e.mkt_cap_usd)) : '—'"></span>
+                  <span>P/E FY1 <span class="font-medium" x-text="fmtPE(e.fwd_pe_fy1)"></span></span>
+                  <span title="EPS FY1 consensus vs TTM — crescimento YoY 1-year forward">
+                    EPS FY1 YoY
+                    <span :class="e.eps_growth_fy1>0 ? 'text-emerald-400':'text-red-400'"
+                                  x-text="fmtPct(e.eps_growth_fy1)"></span>
+                  </span>
+                </div>
+              </a>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <p x-show="earnings.length===0" class="muted text-sm">Nenhum earning no range selecionado.</p>
+  </section>
+
+  <footer class="muted text-xs text-center pt-4 border-t border-slate-800">
+    Solana Global Tech · privado · data: yfinance + Finnhub · <a class="underline" href="/api/heatmap" target="_blank">raw API</a>
+  </footer>
+</div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('dashboard', () => ({
+      heatmap: { subsectors: [], themes: [], subsector_counts: {} },
+      earnings: [],
+      weeks: 2,
+      tickerQuery: '',
+      stats: { companies: '—', events: '—', prices_latest: '' },
+      focalTicker: '',
+      focalData: null,
+      focalScoreMap: {},
+
+      async load() {
+        await this.loadHeatmap();
+        await this.loadEarnings();
+      },
+      async loadFocal() {
+        const t = (this.focalTicker || '').trim().toUpperCase();
+        if (!t) { this.focalData = null; this.focalScoreMap = {}; return; }
+        const r = await fetch('/api/ticker-theme-matrix/' + t);
+        if (!r.ok) { this.focalData = null; this.focalScoreMap = {}; return; }
+        this.focalData = await r.json();
+        this.focalScoreMap = {};
+        for (const s of this.focalData.scores) {
+          this.focalScoreMap[s.theme_id] = s.score;
+        }
+      },
+      dotClass(theme_id, subsector) {
+        if (!this.focalData) return '';
+        if (this.focalData.subsector !== subsector) return '';
+        const sc = this.focalScoreMap[theme_id] || 0;
+        if (sc >= 70) return 'cell-dot cell-dot-strong';
+        if (sc >= 40) return 'cell-dot';
+        return '';
+      },
+      cellTitle(t, s) {
+        const base = t.theme_id + ' × ' + s + ': bullish=' + (t.cells[s]?.b ?? 0);
+        if (this.focalData && this.focalData.subsector === s) {
+          const sc = this.focalScoreMap[t.theme_id] || 0;
+          return base + `  |  ${this.focalData.ticker} score=${sc.toFixed(0)}`;
+        }
+        return base;
+      },
+      async loadHeatmap() {
+        const r = await fetch('/api/heatmap');
+        this.heatmap = await r.json();
+      },
+      async loadEarnings() {
+        const r = await fetch('/api/earnings/week?n=' + this.weeks);
+        this.earnings = await r.json();
+        this.stats.events = this.earnings.length;
+        // pega latest date do primeiro evento (dados existem)
+        const univ = await (await fetch('/api/universe')).json();
+        this.stats.companies = univ.filter(u => u.active && !u.is_private).length;
+        if (this.earnings[0]) this.stats.prices_latest = this.earnings[0].report_date ? 'today: ' + new Date().toISOString().slice(0,10) : '';
+      },
+      cellClass(b) {
+        if (b === 2) return 'b2';
+        if (b === 1) return 'b1';
+        if (b === -1) return 'bn1';
+        if (b === -2) return 'bn2';
+        return 'b0';
+      },
+      cellText(b) {
+        if (b === undefined || b === null || b === 0) return '';
+        return (b > 0 ? '+' : '') + b;
+      },
+      groupedEarnings() {
+        const g = {};
+        for (const e of this.earnings) {
+          const k = e.report_date;
+          (g[k] ||= []).push(e);
+        }
+        return g;
+      },
+      formatDay(k) {
+        const d = new Date(k + 'T12:00:00');
+        return d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+      },
+      headerInfo() {
+        return this.heatmap.themes.length + ' temas · ' +
+               this.heatmap.subsectors.length + ' subsetores · 2026';
+      },
+      fmtB(x) {
+        if (!x) return '—';
+        if (x >= 1e12) return (x/1e12).toFixed(2) + 'T';
+        return (x/1e9).toFixed(0) + 'B';
+      },
+      fmtPE(x) { return x ? Number(x).toFixed(1) + 'x' : '—'; },
+      fmtPct(x) { return (x || x === 0) ? (x*100).toFixed(0) + '%' : '—'; },
+      goTicker() {
+        const t = this.tickerQuery.trim().toUpperCase();
+        if (t) window.location.href = '/company/' + t;
+      },
+    }));
+  });
+</script>
+</body>
+</html>
