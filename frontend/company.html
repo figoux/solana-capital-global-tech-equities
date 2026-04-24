@@ -64,6 +64,7 @@
         <dt>Fwd P/E FY1</dt><dd x-text="fmt(data?.multiples?.fwd_pe_fy1, 'x')"></dd>
         <dt>Fwd P/E FY2</dt><dd x-text="fmt(data?.multiples?.fwd_pe_fy2, 'x')"></dd>
         <dt>P/S NTM</dt><dd x-text="fmt(data?.multiples?.ps_ntm, 'x')"></dd>
+        <dt>P/B TTM</dt><dd x-text="fmt(data?.multiples?.pb_ttm, 'x')"></dd>
         <dt>PEG NTM</dt><dd x-text="fmt(data?.multiples?.peg_ntm, 'x')"></dd>
         <dt>EPS growth FY1</dt><dd :class="colorPct(data?.multiples?.eps_growth_fy1)" x-text="fmtPct(data?.multiples?.eps_growth_fy1)"></dd>
         <dt>EPS growth FY2</dt><dd :class="colorPct(data?.multiples?.eps_growth_fy2)" x-text="fmtPct(data?.multiples?.eps_growth_fy2)"></dd>
@@ -77,7 +78,7 @@
     <section class="bg-slate-800 border border-slate-700 rounded p-4">
       <h2 class="text-sm font-semibold muted uppercase mb-3">Next earnings</h2>
       <div x-show="data?.next_earnings" class="mb-4 p-3 bg-slate-900 rounded border border-emerald-800">
-        <div class="text-lg font-bold" x-text="data?.next_earnings?.report_date + ' · ' + data?.next_earnings?.report_time"></div>
+        <div class="text-lg font-bold" x-text="data?.next_earnings?.report_date + (data?.next_earnings?.report_time && data?.next_earnings?.report_time !== 'unknown' ? ' · ' + data?.next_earnings?.report_time : '')"></div>
         <div class="text-xs muted" x-text="'Period: ' + data?.next_earnings?.fiscal_period"></div>
         <div class="mt-2 text-sm">
           <span>EPS est: <span class="font-medium" x-text="data?.next_earnings?.eps_est || '—'"></span></span>
@@ -85,6 +86,19 @@
         </div>
       </div>
       <p x-show="!data?.next_earnings" class="muted text-sm mb-4">Sem evento agendado.</p>
+
+      <h2 class="text-sm font-semibold muted uppercase mb-2">Past earnings reactions</h2>
+      <div x-show="(data?.earnings_reactions || []).length > 0" class="flex flex-wrap gap-1.5 mb-4">
+        <template x-for="er in data?.earnings_reactions || []" :key="er.fiscal_period">
+          <div class="text-[11px] px-2 py-1 rounded border"
+               :class="er.reaction_pct > 0 ? 'bg-emerald-950 border-emerald-700 text-emerald-300' : (er.reaction_pct < 0 ? 'bg-red-950 border-red-800 text-red-300' : 'bg-slate-900 border-slate-700 muted')"
+               :title="'Report: ' + er.report_date + (er.report_time && er.report_time !== 'unknown' ? ' (' + er.report_time + ')' : '')">
+            <span class="muted mr-1" x-text="er.fiscal_period"></span>
+            <span class="num font-semibold" x-text="er.reaction_pct !== null ? (er.reaction_pct > 0 ? '+' : '') + Number(er.reaction_pct).toFixed(1) + '%' : 'n/a'"></span>
+          </div>
+        </template>
+      </div>
+      <p x-show="(data?.earnings_reactions || []).length === 0" class="muted text-xs mb-4">Sem histórico de reações ainda.</p>
 
       <h2 class="text-sm font-semibold muted uppercase mb-2">Consensus estimates</h2>
       <table class="w-full text-xs">

@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS multiples (
   pe_ttm           REAL,
   ev_ebitda_ntm    REAL,
   ps_ntm           REAL,
+  pb_ttm           REAL,                        -- price to book (trailing)
   eps_growth_ntm   REAL,                        -- NTM vs TTM %
   eps_growth_fy1   REAL,
   eps_growth_fy2   REAL,
@@ -100,6 +101,21 @@ CREATE TABLE IF NOT EXISTS earnings_events (
   press_release_url TEXT,
   transcript_url    TEXT,
   summary_md        TEXT,                       -- Claude-written earnings recap, editable
+  PRIMARY KEY (ticker, fiscal_period),
+  FOREIGN KEY (ticker) REFERENCES companies(ticker)
+);
+
+-- ---------- Earnings reaction history (day-after % change for last N quarters) ----------
+
+CREATE TABLE IF NOT EXISTS earnings_history (
+  ticker            TEXT NOT NULL,
+  fiscal_period     TEXT NOT NULL,              -- e.g. '2025Q4'
+  report_date       TEXT NOT NULL,              -- YYYY-MM-DD of earnings release
+  close_before      REAL,                       -- close the trading day BEFORE the release
+  close_after       REAL,                       -- close the trading day OF/AFTER the release (depends on bmo/amc)
+  reaction_pct      REAL,                       -- (close_after - close_before) / close_before * 100
+  report_time       TEXT,                       -- 'bmo','amc','unknown' — drives which close to use
+  updated_at        TEXT DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (ticker, fiscal_period),
   FOREIGN KEY (ticker) REFERENCES companies(ticker)
 );

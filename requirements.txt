@@ -8,6 +8,7 @@ requests>=2.31.0
 
 # Parsing/utilities
 pandas>=2.2.0
+lxml>=5.1.0              # requirido p/ pd.read_html (yfinance.get_earnings_dates)
 python-dateutil>=2.9.0
 pydantic>=2.6.0
 python-dotenv>=1.0.1

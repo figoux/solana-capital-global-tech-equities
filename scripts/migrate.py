@@ -64,6 +64,28 @@ def main() -> None:
         GROUP BY c.ticker, t.theme_id
     """)
 
+    # M004 — pb_ttm column em multiples
+    if not column_exists(cur, "multiples", "pb_ttm"):
+        cur.execute("ALTER TABLE multiples ADD COLUMN pb_ttm REAL")
+        print("  + multiples.pb_ttm")
+
+    # M005 — earnings_history table (reacao dia-apos release)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS earnings_history (
+          ticker            TEXT NOT NULL,
+          fiscal_period     TEXT NOT NULL,
+          report_date       TEXT NOT NULL,
+          close_before      REAL,
+          close_after       REAL,
+          reaction_pct      REAL,
+          report_time       TEXT,
+          updated_at        TEXT DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (ticker, fiscal_period),
+          FOREIGN KEY (ticker) REFERENCES companies(ticker)
+        )
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_eh_ticker_date ON earnings_history(ticker, report_date DESC)")
+
     conn.commit()
     conn.close()
     print("[migrate] done")

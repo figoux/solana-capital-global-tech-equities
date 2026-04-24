@@ -249,6 +249,12 @@ def company_detail(ticker: str):
         (ticker,),
     ).fetchone()
 
+    reactions = conn.execute(
+        "SELECT fiscal_period, report_date, close_before, close_after, reaction_pct, report_time "
+        "FROM earnings_history WHERE ticker=? ORDER BY report_date DESC LIMIT 4",
+        (ticker,),
+    ).fetchall()
+
     conn.close()
     return {
         "company": dict(c),
@@ -259,6 +265,7 @@ def company_detail(ticker: str):
         "themes": [dict(t) for t in themes_tags],
         "exposures": [dict(e) for e in exposures],
         "volatility": dict(vol) if vol else None,
+        "earnings_reactions": [dict(r) for r in reactions],
     }
 
 

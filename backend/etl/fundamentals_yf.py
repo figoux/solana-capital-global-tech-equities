@@ -115,6 +115,7 @@ def process_ticker(cur, ticker: str, yahoo_ticker: str, reporting_ccy: str | Non
     fwd_pe = _f(info.get("forwardPE"))
     pe_ttm = _f(info.get("trailingPE"))
     ps_ntm = _f(info.get("priceToSalesTrailing12Months"))  # yfinance chama TTM aqui, mas é o que dá
+    pb_ttm = _f(info.get("priceToBook"))
     div_yield = _f(info.get("dividendYield"))
     # PEG: yfinance expõe trailingPegRatio (mais estável que "pegRatio")
     peg = _f(info.get("trailingPegRatio")) or _f(info.get("pegRatio"))
@@ -199,20 +200,20 @@ def process_ticker(cur, ticker: str, yahoo_ticker: str, reporting_ccy: str | Non
         """
         INSERT INTO multiples
           (ticker, as_of_date, mkt_cap_usd, ev_usd, fwd_pe_ntm, fwd_pe_fy1, fwd_pe_fy2,
-           pe_ttm, ev_ebitda_ntm, ps_ntm, eps_growth_ntm, eps_growth_fy1, eps_growth_fy2,
+           pe_ttm, ev_ebitda_ntm, ps_ntm, pb_ttm, eps_growth_ntm, eps_growth_fy1, eps_growth_fy2,
            rev_growth_ntm, rev_growth_fy1, rev_growth_fy2, peg_ntm, dividend_yield)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON CONFLICT(ticker, as_of_date) DO UPDATE SET
           mkt_cap_usd=excluded.mkt_cap_usd, ev_usd=excluded.ev_usd,
           fwd_pe_ntm=excluded.fwd_pe_ntm, fwd_pe_fy1=excluded.fwd_pe_fy1, fwd_pe_fy2=excluded.fwd_pe_fy2,
-          pe_ttm=excluded.pe_ttm, ps_ntm=excluded.ps_ntm,
+          pe_ttm=excluded.pe_ttm, ps_ntm=excluded.ps_ntm, pb_ttm=excluded.pb_ttm,
           eps_growth_ntm=excluded.eps_growth_ntm, eps_growth_fy1=excluded.eps_growth_fy1, eps_growth_fy2=excluded.eps_growth_fy2,
           rev_growth_ntm=excluded.rev_growth_ntm, rev_growth_fy1=excluded.rev_growth_fy1, rev_growth_fy2=excluded.rev_growth_fy2,
           peg_ntm=excluded.peg_ntm, dividend_yield=excluded.dividend_yield
         """,
         (
             ticker, as_of, mkt_cap_usd, ev_usd, fwd_pe, fwd_pe_fy1, fwd_pe_fy2,
-            pe_ttm, None, ps_ntm, eps_growth_ntm, eps_growth_fy1, eps_growth_fy2,
+            pe_ttm, None, ps_ntm, pb_ttm, eps_growth_ntm, eps_growth_fy1, eps_growth_fy2,
             None, rev_growth_fy1, rev_growth_fy2, peg, div_yield,
         ),
     )
