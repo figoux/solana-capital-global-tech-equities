@@ -141,7 +141,7 @@
                  class="block bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-emerald-500 rounded px-3 py-2">
                 <div class="flex items-baseline justify-between">
                   <span class="font-semibold" x-text="e.ticker"></span>
-                  <span class="text-xs muted" x-text="e.report_time"></span>
+                  <span class="text-xs muted" x-show="e.report_time && e.report_time !== 'unknown'" x-text="e.report_time"></span>
                 </div>
                 <div class="text-xs muted truncate" x-text="e.name + ' · ' + e.subsector"></div>
                 <div class="mt-1 flex justify-between text-xs">
@@ -152,6 +152,19 @@
                     <span :class="e.eps_growth_fy1>0 ? 'text-emerald-400':'text-red-400'"
                                   x-text="fmtPct(e.eps_growth_fy1)"></span>
                   </span>
+                </div>
+                <div x-show="(e.earnings_reactions || []).length > 0"
+                     class="mt-1 text-[11px] muted truncate"
+                     :title="'Reação day-after dos últimos trimestres'">
+                  Hist:
+                  <template x-for="(er, idx) in (e.earnings_reactions || []).slice().reverse()" :key="er.fiscal_period">
+                    <span>
+                      <span x-show="idx > 0" class="muted"> · </span>
+                      <span class="muted" x-text="shortPeriod(er.fiscal_period)"></span>
+                      <span :class="er.reaction_pct > 0 ? 'text-emerald-400' : (er.reaction_pct < 0 ? 'text-red-400' : 'muted')"
+                            x-text="er.reaction_pct !== null ? (er.reaction_pct > 0 ? '+' : '') + Number(er.reaction_pct).toFixed(1) : 'n/a'"></span>
+                    </span>
+                  </template>
                 </div>
               </a>
             </template>
@@ -258,6 +271,13 @@
       },
       fmtPE(x) { return x ? Number(x).toFixed(1) + 'x' : '—'; },
       fmtPct(x) { return (x || x === 0) ? (x*100).toFixed(0) + '%' : '—'; },
+      shortPeriod(p) {
+        // "2025Q4" -> "'25Q4" (economiza espaço no card estreito)
+        if (!p) return '';
+        const m = p.match(/^(\d{4})(Q\d)$/);
+        if (!m) return p;
+        return "'" + m[1].slice(2) + m[2];
+      },
       goTicker() {
         const t = this.tickerQuery.trim().toUpperCase();
         if (t) window.location.href = '/company/' + t;

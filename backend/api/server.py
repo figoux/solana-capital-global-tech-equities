@@ -188,8 +188,33 @@ def earnings_week(n: int = 2):
         """,
         (start.isoformat(), end.isoformat()),
     ).fetchall()
+
+    # Batch-fetch last 4 reactions per ticker (1 query em vez de N)
+    reactions_by_ticker: dict[str, list[dict]] = {}
+    if rows:
+        tickers = list({r["ticker"] for r in rows})
+        placeholders = ",".join("?" * len(tickers))
+        hist_rows = conn.execute(
+            f"""
+            SELECT ticker, fiscal_period, report_date, reaction_pct, report_time
+            FROM earnings_history
+            WHERE ticker IN ({placeholders})
+            ORDER BY ticker, report_date DESC
+            """,
+            tickers,
+        ).fetchall()
+        for h in hist_rows:
+            lst = reactions_by_ticker.setdefault(h["ticker"], [])
+            if len(lst) < 4:  # últimos 4 (já vem ordenado DESC)
+                lst.append(dict(h))
+
     conn.close()
-    return [dict(r) for r in rows]
+    out = []
+    for r in rows:
+        d = dict(r)
+        d["earnings_reactions"] = reactions_by_ticker.get(r["ticker"], [])
+        out.append(d)
+    return out
 
 
 @app.get("/api/company/{ticker}")
