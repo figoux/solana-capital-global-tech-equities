@@ -606,6 +606,43 @@ def pair_detail(a: str, b: str):
     if sa["mkt_cap_usd"] and sb["mkt_cap_usd"]:
         ratios["mcap_ratio"] = round(sa["mkt_cap_usd"] / sb["mkt_cap_usd"], 2)
 
+    # Preços 12m rebaseados (intersecção de datas comuns)
+    price_rows = conn.execute(
+        """
+        SELECT p1.date, p1.adj_close AS a_close, p2.adj_close AS b_close
+        FROM prices p1
+        JOIN prices p2 ON p1.date = p2.date AND p2.ticker = ?
+        WHERE p1.ticker = ? AND p1.date >= date('now', '-365 days')
+        ORDER BY p1.date ASC
+        """,
+        (b, a),
+    ).fetchall()
+    prices_12m = None
+    if price_rows and len(price_rows) >= 2:
+        dates = [r["date"] for r in price_rows]
+        a_close = [r["a_close"] for r in price_rows]
+        b_close = [r["b_close"] for r in price_rows]
+        a0, b0 = a_close[0], b_close[0]
+        a_rel = [round(c / a0 * 100, 2) if a0 else None for c in a_close]
+        b_rel = [round(c / b0 * 100, 2) if b0 else None for c in b_close]
+        spread = [round(ar - br, 2) if (ar is not None and br is not None) else None
+                  for ar, br in zip(a_rel, b_rel)]
+        totals = {
+            "a_ret_pct": round(a_rel[-1] - 100, 2) if a_rel[-1] is not None else None,
+            "b_ret_pct": round(b_rel[-1] - 100, 2) if b_rel[-1] is not None else None,
+            "spread_pt": round(spread[-1], 2) if spread[-1] is not None else None,
+            "days": len(dates),
+            "start_date": dates[0],
+            "end_date": dates[-1],
+        }
+        prices_12m = {
+            "dates": dates,
+            "a": a_rel,
+            "b": b_rel,
+            "spread": spread,
+            "totals": totals,
+        }
+
     conn.close()
     return {
         "a": sa,
@@ -613,6 +650,7 @@ def pair_detail(a: str, b: str):
         "cosine_sim": cosine_sim,
         "exposures_compared": exposures,
         "ratios": ratios,
+        "prices_12m": prices_12m,
     }
 
 

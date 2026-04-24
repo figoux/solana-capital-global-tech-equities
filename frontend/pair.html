@@ -17,6 +17,7 @@
     .bar-l, .bar-r { height: 10px; background: #0f172a; border-radius: 3px; position: relative; }
     .bar-l > div { position: absolute; right: 0; top: 0; bottom: 0; background: #10b981; border-radius: 3px; }
     .bar-r > div { position: absolute; left: 0; top: 0; bottom: 0; background: #60a5fa; border-radius: 3px; }
+    [x-cloak] { display: none !important; }
   </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen">
@@ -134,6 +135,122 @@
     </div>
   </section>
 
+  <!-- Performance 12m chart -->
+  <section x-show="data?.prices_12m" class="mb-6 bg-slate-800 border border-slate-700 rounded p-4">
+    <div class="flex items-baseline justify-between mb-2">
+      <h2 class="text-sm font-semibold muted uppercase">Performance 12m (rebase = 100)</h2>
+      <div class="text-xs muted">
+        <span x-show="data?.prices_12m?.totals">
+          <span x-text="data?.prices_12m?.totals?.start_date"></span>
+          <span class="mx-1">→</span>
+          <span x-text="data?.prices_12m?.totals?.end_date"></span>
+          <span class="mx-1">·</span>
+          <span x-text="data?.prices_12m?.totals?.days + ' dias úteis comuns'"></span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Totals bar -->
+    <div x-show="data?.prices_12m?.totals" class="grid grid-cols-3 gap-2 mb-3 text-sm">
+      <div class="bg-slate-900 rounded p-2 border border-emerald-900">
+        <div class="text-xs muted" x-text="data?.a?.ticker"></div>
+        <div class="text-lg font-bold num"
+             :class="(data?.prices_12m?.totals?.a_ret_pct ?? 0) > 0 ? 'text-emerald-400' : 'text-red-400'"
+             x-text="data?.prices_12m?.totals?.a_ret_pct !== null ? ((data.prices_12m.totals.a_ret_pct > 0 ? '+' : '') + data.prices_12m.totals.a_ret_pct + '%') : '—'"></div>
+      </div>
+      <div class="bg-slate-900 rounded p-2 border border-blue-900">
+        <div class="text-xs muted" x-text="data?.b?.ticker"></div>
+        <div class="text-lg font-bold num"
+             :class="(data?.prices_12m?.totals?.b_ret_pct ?? 0) > 0 ? 'text-emerald-400' : 'text-red-400'"
+             x-text="data?.prices_12m?.totals?.b_ret_pct !== null ? ((data.prices_12m.totals.b_ret_pct > 0 ? '+' : '') + data.prices_12m.totals.b_ret_pct + '%') : '—'"></div>
+      </div>
+      <div class="bg-slate-900 rounded p-2 border border-slate-700">
+        <div class="text-xs muted">Spread (A − B)</div>
+        <div class="text-lg font-bold num"
+             :class="(data?.prices_12m?.totals?.spread_pt ?? 0) > 0 ? 'text-emerald-400' : 'text-red-400'"
+             x-text="data?.prices_12m?.totals?.spread_pt !== null ? ((data.prices_12m.totals.spread_pt > 0 ? '+' : '') + data.prices_12m.totals.spread_pt + 'pt') : '—'"></div>
+        <div class="text-[10px] muted mt-0.5" x-text="spreadHint()"></div>
+      </div>
+    </div>
+
+    <!-- SVG chart -->
+    <div class="relative" @mouseleave="hover = null">
+      <svg :viewBox="'0 0 ' + CHART_W + ' ' + CHART_H" class="w-full"
+           @mousemove="onMove($event)" style="cursor: crosshair;">
+        <!-- Grid horizontal -->
+        <template x-for="g in gridLines()" :key="g.y">
+          <g>
+            <line :x1="PAD_L" :x2="CHART_W - PAD_R" :y1="g.y" :y2="g.y"
+                  stroke="#1e293b" stroke-width="1" stroke-dasharray="2,3" />
+            <text :x="PAD_L - 6" :y="g.y + 3" text-anchor="end"
+                  fill="#64748b" font-size="10" x-text="g.label"></text>
+          </g>
+        </template>
+
+        <!-- Baseline 100 em destaque -->
+        <line :x1="PAD_L" :x2="CHART_W - PAD_R" :y1="yOf(100)" :y2="yOf(100)"
+              stroke="#475569" stroke-width="1" />
+
+        <!-- Eixo X ticks (quarterly) -->
+        <template x-for="t in xTicks()" :key="t.i">
+          <g>
+            <line :x1="t.x" :x2="t.x" :y1="CHART_H - PAD_B" :y2="CHART_H - PAD_B + 4"
+                  stroke="#475569" />
+            <text :x="t.x" :y="CHART_H - PAD_B + 16" text-anchor="middle"
+                  fill="#64748b" font-size="10" x-text="t.label"></text>
+          </g>
+        </template>
+
+        <!-- Linha A (emerald) -->
+        <polyline :points="pathPoints('a')" fill="none" stroke="#10b981" stroke-width="1.8"/>
+        <!-- Linha B (blue) -->
+        <polyline :points="pathPoints('b')" fill="none" stroke="#60a5fa" stroke-width="1.8"/>
+
+        <!-- Crosshair hover -->
+        <g x-show="hover">
+          <line :x1="hover?.x" :x2="hover?.x" :y1="PAD_T" :y2="CHART_H - PAD_B"
+                stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3" />
+          <circle :cx="hover?.x" :cy="hover?.ya" r="3.5" fill="#10b981" stroke="#0f172a" stroke-width="1.5"/>
+          <circle :cx="hover?.x" :cy="hover?.yb" r="3.5" fill="#60a5fa" stroke="#0f172a" stroke-width="1.5"/>
+        </g>
+      </svg>
+
+      <!-- Tooltip HTML (melhor render de texto que em SVG) -->
+      <div x-show="hover" x-cloak
+           class="absolute bg-slate-900/95 border border-slate-600 rounded px-2 py-1.5 text-xs pointer-events-none num shadow-lg"
+           :style="'left:' + tooltipLeft() + 'px; top:' + tooltipTop() + 'px;'">
+        <div class="muted text-[10px]" x-text="hover?.date"></div>
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2 h-2 bg-emerald-500 rounded-sm"></span>
+          <span x-text="data?.a?.ticker"></span>
+          <span class="ml-auto font-semibold" x-text="hover?.aRel !== undefined ? hover.aRel.toFixed(1) : '—'"></span>
+          <span class="muted" x-text="hover?.aPct !== undefined ? ((hover.aPct > 0 ? '+' : '') + hover.aPct.toFixed(1) + '%') : ''"></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2 h-2 bg-blue-400 rounded-sm"></span>
+          <span x-text="data?.b?.ticker"></span>
+          <span class="ml-auto font-semibold" x-text="hover?.bRel !== undefined ? hover.bRel.toFixed(1) : '—'"></span>
+          <span class="muted" x-text="hover?.bPct !== undefined ? ((hover.bPct > 0 ? '+' : '') + hover.bPct.toFixed(1) + '%') : ''"></span>
+        </div>
+        <div class="flex items-center gap-2 mt-0.5 pt-0.5 border-t border-slate-700">
+          <span class="muted">Spread</span>
+          <span class="ml-auto font-semibold"
+                :class="(hover?.spread ?? 0) > 0 ? 'text-emerald-400' : 'text-red-400'"
+                x-text="hover?.spread !== undefined ? ((hover.spread > 0 ? '+' : '') + hover.spread.toFixed(1) + 'pt') : ''"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="mt-3 flex gap-6 text-xs">
+      <span class="flex items-center gap-2"><span class="inline-block w-4 h-1 bg-emerald-500 rounded"></span>
+        <span x-text="data?.a?.ticker"></span></span>
+      <span class="flex items-center gap-2"><span class="inline-block w-4 h-1 bg-blue-400 rounded"></span>
+        <span x-text="data?.b?.ticker"></span></span>
+      <span class="muted">Passe o mouse pra ver valores</span>
+    </div>
+  </section>
+
   <!-- Exposures overlap -->
   <section x-show="data" class="mb-6 bg-slate-800 border border-slate-700 rounded p-4">
     <h2 class="text-sm font-semibold muted uppercase mb-3">Business exposures — overlap</h2>
@@ -165,6 +282,15 @@
   document.addEventListener('alpine:init', () => {
     Alpine.data('pair', () => ({
       data: null,
+      hover: null,
+
+      // Dimensões do SVG (viewBox — responsivo)
+      CHART_W: 800,
+      CHART_H: 280,
+      PAD_T: 14,
+      PAD_B: 28,
+      PAD_L: 40,
+      PAD_R: 14,
 
       async load() {
         const parts = location.pathname.split('/').filter(Boolean);
@@ -223,6 +349,113 @@
       ivRv(t) {
         if (!t?.iv_30d_atm || !t?.rv_30d) return '—';
         return (t.iv_30d_atm / t.rv_30d).toFixed(2) + 'x';
+      },
+
+      // ---- Chart helpers ----
+      yDomain() {
+        const p = this.data?.prices_12m;
+        if (!p) return [90, 110];
+        const all = [...(p.a || []), ...(p.b || [])].filter(v => v !== null);
+        if (!all.length) return [90, 110];
+        let lo = Math.min(...all, 100);
+        let hi = Math.max(...all, 100);
+        // Padding de 5% em cada ponta
+        const pad = Math.max(2, (hi - lo) * 0.08);
+        return [Math.floor(lo - pad), Math.ceil(hi + pad)];
+      },
+      yOf(val) {
+        const [lo, hi] = this.yDomain();
+        const innerH = this.CHART_H - this.PAD_T - this.PAD_B;
+        const pct = (val - lo) / (hi - lo || 1);
+        return this.PAD_T + innerH * (1 - pct);
+      },
+      xOf(i, n) {
+        const innerW = this.CHART_W - this.PAD_L - this.PAD_R;
+        if (n <= 1) return this.PAD_L;
+        return this.PAD_L + (innerW * i) / (n - 1);
+      },
+      pathPoints(series) {
+        const p = this.data?.prices_12m;
+        if (!p) return '';
+        const arr = p[series] || [];
+        const n = arr.length;
+        return arr.map((v, i) => v !== null ? `${this.xOf(i, n).toFixed(1)},${this.yOf(v).toFixed(1)}` : '').filter(Boolean).join(' ');
+      },
+      gridLines() {
+        const [lo, hi] = this.yDomain();
+        const steps = [];
+        // Tick a cada 5 ou 10 pontos, escolhendo múltiplos de 5 no range
+        const range = hi - lo;
+        const step = range > 60 ? 20 : (range > 30 ? 10 : 5);
+        const start = Math.ceil(lo / step) * step;
+        for (let v = start; v <= hi; v += step) {
+          steps.push({ y: this.yOf(v), label: v.toString() });
+        }
+        return steps;
+      },
+      xTicks() {
+        const p = this.data?.prices_12m;
+        if (!p || !p.dates) return [];
+        const n = p.dates.length;
+        // ~5 ticks igualmente espaçados
+        const nTicks = 5;
+        const ticks = [];
+        for (let i = 0; i < nTicks; i++) {
+          const idx = Math.round((n - 1) * i / (nTicks - 1));
+          const d = p.dates[idx];
+          const [y, m] = d.split('-');
+          const monthNames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+          ticks.push({ i: idx, x: this.xOf(idx, n), label: monthNames[parseInt(m)-1] + '/' + y.slice(2) });
+        }
+        return ticks;
+      },
+      onMove(ev) {
+        const p = this.data?.prices_12m;
+        if (!p || !p.dates?.length) return;
+        const svg = ev.currentTarget;
+        const rect = svg.getBoundingClientRect();
+        // Converte coord do mouse pra viewBox
+        const xView = (ev.clientX - rect.left) / rect.width * this.CHART_W;
+        const innerW = this.CHART_W - this.PAD_L - this.PAD_R;
+        const n = p.dates.length;
+        let idx = Math.round((xView - this.PAD_L) / innerW * (n - 1));
+        idx = Math.max(0, Math.min(n - 1, idx));
+        const aRel = p.a[idx];
+        const bRel = p.b[idx];
+        this.hover = {
+          idx,
+          x: this.xOf(idx, n),
+          ya: this.yOf(aRel),
+          yb: this.yOf(bRel),
+          date: p.dates[idx],
+          aRel, bRel,
+          aPct: aRel !== null ? aRel - 100 : undefined,
+          bPct: bRel !== null ? bRel - 100 : undefined,
+          spread: p.spread[idx],
+          // pixel coords pra tooltip html (aprox — x em % do viewBox)
+          pxPct: (this.xOf(idx, n) / this.CHART_W),
+        };
+      },
+      tooltipLeft() {
+        if (!this.hover) return 0;
+        // x relativo ao container (fraction * clientWidth). Como o SVG é 100% width, usamos pct.
+        // Ajuste: se está na metade direita, desloca pra esquerda pra não cortar.
+        const fracPct = this.hover.pxPct * 100;
+        const container = document.querySelector('[x-data="pair"]');
+        const w = container ? container.querySelector('svg')?.clientWidth || 800 : 800;
+        let leftPx = (this.hover.pxPct * w) + 10;
+        if (this.hover.pxPct > 0.7) leftPx = (this.hover.pxPct * w) - 150;
+        return Math.max(8, leftPx);
+      },
+      tooltipTop() {
+        return 8;
+      },
+      spreadHint() {
+        const t = this.data?.prices_12m?.totals;
+        if (!t || t.spread_pt === null) return '';
+        const a = this.data?.a?.ticker, b = this.data?.b?.ticker;
+        if (Math.abs(t.spread_pt) < 1) return 'Par andou em linha';
+        return t.spread_pt > 0 ? `${a} outperform` : `${b} outperform`;
       },
     }));
   });
