@@ -20,6 +20,9 @@ COHR,COHR,Coherent Corp,Semis,US,USD,Jun,22,also CPO/optics,0
 UMC,UMC,United Microelectronics,Semis,TW,USD,Dec,23,,0
 000660.KS,000660.KS,SK Hynix,Semis,KR,KRW,Dec,24,,0
 RMBS,RMBS,Rambus,Semis,US,USD,Dec,25,,0
+SNDK,SNDK,Sandisk,Semis,US,USD,Dec,32,pure NAND flash; spun off from WDC Feb-2025,0
+WDC,WDC,Western Digital,Semis,US,USD,Jun,33,HDDs post-Sandisk spinoff,0
+STX,STX,Seagate Technology,Semis,US,USD,Jun,34,pure HDD,0
 ASML,ASML,ASML Holding,WFEs,NL,EUR,Dec,26,,0
 AMAT,AMAT,Applied Materials,WFEs,US,USD,Oct,27,,0
 LRCX,LRCX,Lam Research,WFEs,US,USD,Jun,28,,0
@@ -69,7 +72,8 @@ AAPL,AAPL,Apple,OEMs,US,USD,Sep,83,,0
 1810.HK,1810.HK,Xiaomi,OEMs,HK,CNY,Dec,85,,0
 DELL,DELL,Dell Technologies,OEMs,US,USD,Jan,86,,0
 HPQ,HPQ,HP Inc,OEMs,US,USD,Oct,87,,0
-0992.HK,0992.HK,Lenovo Group,OEMs,HK,USD,Mar,88,,0
+SMCI,SMCI,Super Micro Computer,OEMs,US,USD,Jun,86,AI server pure-play,0
+LNVGY,LNVGY,Lenovo Group ADR,OEMs,US,USD,Mar,88,ADR US (1 ADR = 2 ord HK 0992.HK),0
 6758.T,6758.T,Sony Group,OEMs,JP,JPY,Mar,89,,0
 7974.T,7974.T,Nintendo,OEMs,JP,JPY,Mar,90,,0
 LOGI,LOGI,Logitech International,OEMs,CH,USD,Mar,91,,0

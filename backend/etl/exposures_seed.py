@@ -41,6 +41,9 @@ EXPOSURES: dict[str, list[tuple[str, int]]] = {
     "UMC":        [("semis_foundry", 100)],
     "000660.KS":  [("semis_memory", 100)],
     "RMBS":       [("semis_memory", 70), ("semis_general_compute", 30)],
+    "SNDK":       [("semis_memory", 100)],  # pure NAND (spun off from WDC Feb-2025)
+    "WDC":        [("semis_memory", 100)],  # HDDs post-spinoff; groups with memory cycle
+    "STX":        [("semis_memory", 100)],  # pure HDD; groups with memory cycle
     "688256.SS":  [("semis_ai_compute", 100)],
 
     # ============ WFEs ============
@@ -99,7 +102,8 @@ EXPOSURES: dict[str, list[tuple[str, int]]] = {
     "1810.HK":    [("mobile_ecosystem", 55), ("oem_consumer", 20), ("autonomous_vehicles", 15), ("other", 10)],
     "DELL":       [("oem_consumer", 40), ("oem_datacenter", 60)],
     "HPQ":        [("oem_consumer", 100)],
-    "0992.HK":    [("oem_consumer", 60), ("mobile_ecosystem", 15), ("oem_datacenter", 25)],
+    "SMCI":       [("oem_datacenter", 100)],  # AI server pure-play
+    "LNVGY":      [("oem_consumer", 60), ("mobile_ecosystem", 15), ("oem_datacenter", 25)],  # ADR US (renomeado de 0992.HK)
     "6758.T":     [("gaming_content", 30), ("oem_consumer", 30), ("subscription_media", 20), ("other", 20)],
     "7974.T":     [("gaming_content", 100)],
     "LOGI":       [("oem_consumer", 100)],
