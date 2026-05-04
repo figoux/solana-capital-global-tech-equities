@@ -118,6 +118,8 @@ EXPOSURES: dict[str, list[tuple[str, int]]] = {
     "DBX":        [("software_enterprise_saas", 100)],
     "BOX":        [("software_enterprise_saas", 100)],
     "PSTG":       [("oem_datacenter", 100)],
+    "CRWV":       [("cloud_iaas_paas", 100)],  # GPU cloud pure-play (IPO Mar-2025)
+    "NBIS":       [("cloud_iaas_paas", 100)],  # AI cloud pure-play (Yandex spin-off)
     "BE":         [("oem_datacenter", 100)],
 
     # ============ Cybersecurity ============
