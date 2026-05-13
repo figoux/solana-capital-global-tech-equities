@@ -42,7 +42,7 @@
   <!-- Header card -->
   <header x-show="data?.company" class="mb-6">
     <div class="flex items-baseline gap-3">
-      <h1 class="text-3xl font-bold" x-text="data?.company?.ticker"></h1>
+      <h1 class="text-3xl font-bold" x-text="withCo(data?.company?.ticker, data?.company?.name)"></h1>
       <span class="text-lg text-slate-300" x-text="data?.company?.name"></span>
       <span class="ml-auto text-xs px-2 py-1 rounded bg-slate-800 muted" x-text="data?.company?.subsector"></span>
     </div>
@@ -186,6 +186,8 @@
             <template x-for="t in exp?.tickers || []" :key="t">
               <th class="text-center px-2 py-2" :class="t === exp.focal.ticker ? 'text-emerald-400 font-bold' : ''">
                 <div x-text="t"></div>
+                <div class="muted text-[10px]" x-show="isNumericTicker(t) && exp?.meta?.[t]?.name"
+                     x-text="shortName(exp?.meta?.[t]?.name)"></div>
                 <div class="muted text-[10px]"
                      x-text="t === exp.focal.ticker ? 'FOCAL' : (exp.cosine_map[t] !== undefined ? Number(exp.cosine_map[t]).toFixed(2) : '')"></div>
               </th>
@@ -342,6 +344,21 @@
       colorPct(x) {
         if (x === null || x === undefined) return '';
         return x > 0 ? 'text-emerald-400' : (x < 0 ? 'text-red-400' : '');
+      },
+      // Tickers numericos (0700.HK, 9988.HK, 2454.TW, 688256.SS, etc) sao opacos —
+      // adiciona (Nome) ao lado pra desambiguar. Tickers alfabeticos (NVDA, AAPL) ficam como estao.
+      isNumericTicker(t) {
+        return t && /^\d/.test(t);
+      },
+      shortName(name) {
+        if (!name) return '';
+        const cleaned = name.replace(/\s+(Group|Holdings|Inc|Corp|Corporation|Ltd|Limited|ADR|Class\s+[A-C]|Co)\.?$/gi, '').trim();
+        return cleaned.length > 18 ? cleaned.slice(0, 15) + '…' : cleaned;
+      },
+      withCo(ticker, name) {
+        if (!ticker) return '';
+        if (this.isNumericTicker(ticker) && name) return `${ticker} (${this.shortName(name)})`;
+        return ticker;
       },
     }));
   });

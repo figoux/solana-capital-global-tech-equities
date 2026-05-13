@@ -39,9 +39,9 @@
   <header x-show="data" class="mb-6 border-b border-slate-700 pb-4">
     <div class="flex items-baseline gap-3">
       <h1 class="text-3xl font-bold">
-        <span class="text-emerald-400" x-text="data?.a?.ticker"></span>
+        <span class="text-emerald-400" x-text="withCo(data?.a?.ticker, data?.a?.name)"></span>
         <span class="muted mx-2">×</span>
-        <span class="text-blue-400" x-text="data?.b?.ticker"></span>
+        <span class="text-blue-400" x-text="withCo(data?.b?.ticker, data?.b?.name)"></span>
       </h1>
       <span class="ml-auto text-sm muted">
         <span>Cosine sim:</span>
@@ -349,6 +349,17 @@
       ivRv(t) {
         if (!t?.iv_30d_atm || !t?.rv_30d) return '—';
         return (t.iv_30d_atm / t.rv_30d).toFixed(2) + 'x';
+      },
+      isNumericTicker(t) { return t && /^\d/.test(t); },
+      shortName(name) {
+        if (!name) return '';
+        const cleaned = name.replace(/\s+(Group|Holdings|Inc|Corp|Corporation|Ltd|Limited|ADR|Class\s+[A-C]|Co)\.?$/gi, '').trim();
+        return cleaned.length > 18 ? cleaned.slice(0, 15) + '…' : cleaned;
+      },
+      withCo(ticker, name) {
+        if (!ticker) return '';
+        if (this.isNumericTicker(ticker) && name) return `${ticker} (${this.shortName(name)})`;
+        return ticker;
       },
 
       // ---- Chart helpers ----

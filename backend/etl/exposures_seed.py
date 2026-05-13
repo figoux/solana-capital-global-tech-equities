@@ -31,6 +31,7 @@ EXPOSURES: dict[str, list[tuple[str, int]]] = {
     "INTC":       [("semis_general_compute", 50), ("semis_foundry", 30), ("semis_ai_compute", 10), ("oem_datacenter", 5), ("oem_consumer", 5)],
     "MRVL":       [("semis_networking", 50), ("semis_ai_compute", 25), ("semis_general_compute", 15), ("semis_memory", 10)],
     "NXPI":       [("semis_general_compute", 100)],
+    "2454.TW":    [("semis_ai_compute", 35), ("mobile_ecosystem", 25), ("semis_networking", 25), ("oem_consumer", 10), ("semis_general_compute", 5)],  # MediaTek — ASIC c/ Google-Meta (peer AVGO ~0.77) + Dimensity SoC + Wi-Fi/BT
     "005930.KS":  [("semis_memory", 30), ("semis_foundry", 20), ("mobile_ecosystem", 20), ("oem_consumer", 15), ("semis_general_compute", 5), ("semis_ai_compute", 3), ("oem_datacenter", 4), ("semis_networking", 3)],
     "MPWR":       [("semis_general_compute", 100)],
     "ON":         [("semis_general_compute", 100)],
