@@ -1,122 +1,255 @@
-# Solana Global Tech — dashboard privado
+# Solana Capital Global Tech Equities
 
-Dashboard interno de earnings, temas macro e pair trading em tech global.
-Stack: FastAPI + SQLite + Alpine.js/Tailwind + yfinance/Finnhub.
+A research dashboard for global technology equities, focused on **pair trading**,
+**earnings tracking**, and **thematic exposure analysis**. Designed for an
+equity long/short PM workflow — it answers the questions you ask in the hour
+before a print: *what's the right hedge for this name, where is the IV cheap,
+who reports next week, what did the stock do last quarter.*
 
-## Deploy: acesso pro time da Solana
+```
+                       ┌────────────────────────┐
+                       │   Render (FastAPI)     │
+                       │   serves dashboard     │
+                       └───────────▲────────────┘
+                                   │
+                                   │ deploy on push
+                                   │
+┌────────────────┐    ┌────────────┴────────────┐
+│  yfinance      │───▶│  Local ETL (Python)     │───▶ git push
+│  Finnhub       │    │  → dashboard.db (SQLite)│
+└────────────────┘    └─────────────────────────┘
+```
 
-### Arquitetura
-- **Servidor (Render.com)**: serve dashboard em `https://solana-tech.onrender.com` com HTTP Basic auth
-- **ETL (laptop Filipe)**: roda seeds + yfinance + Finnhub localmente, gera `backend/db/dashboard.db`
-- **Deploy pipeline**: `python -m backend.etl.*` → `git add backend/db/dashboard.db` → `git commit` → `git push` → Render auto-deploya em ~2 min
-
-### Credenciais
-- **Usuário**: `solana`
-- **Senha**: `REDACTED_PASSWORD` ← **salva num 1Password do time, NÃO commita no git**
+The application is a single FastAPI process with a server-rendered Alpine.js
+frontend. The ETL pipeline runs locally on a schedule (Windows Task Scheduler
+in our setup), updates a SQLite snapshot, commits it to the repo, and Render
+redeploys with the new data.
 
 ---
 
-## Setup inicial (uma vez só)
+## What it actually shows
 
-### 1. Criar repo privado no GitHub
-```
-https://github.com/new
-  → Nome: solana-global-tech
-  → Visibility: Private
-  → NÃO inicializar com README (já tenho)
-```
-Depois de criar, copia o URL SSH ou HTTPS (ex: `git@github.com:filipe_gouveia/solana-global-tech.git`).
+- **Thematic heatmap** — a matrix of `theme × subsector` bullishness ratings, with
+  per-cell rationale stored in markdown. Click any theme row to drill into the
+  exposed tickers and a suggested long/short basket.
+- **Per-company page** — valuation snapshot (P/E forward & TTM, P/B, P/S, PEG,
+  growth metrics), consensus estimates, next earnings event, business exposure
+  weights by category, and historical day-after earnings reactions for the last
+  four quarters.
+- **Pair trading workspace** — cosine similarity between any two tickers based
+  on business exposure weights, side-by-side multiples & volatility stats,
+  IV-neutral and vol-neutral sizing ratios, an exposure overlap visualization,
+  and a 12-month rebased performance chart with an interactive crosshair.
+- **Upcoming earnings feed** — chronological cards for the next 1/2/4/8 weeks,
+  each showing mkt cap, forward P/E, EPS YoY growth, and the last four
+  earnings reactions inline.
+- **Focal ticker overlay** — pick a ticker and the heatmap highlights its
+  subsector column and dots the cells where that ticker has a theme score
+  above 40 (strong dot above 70).
 
-### 2. Push inicial (no laptop, PowerShell)
-```powershell
-cd "C:\Users\filip\OneDrive\Documentos\Claude\Projects\Solana Global Tech"
-git init
-git add .gitignore README.md render.yaml requirements.txt universe.csv
-git add backend/ frontend/ scripts/
-git add BUSINESS_EXPOSURES.md PLANO.md
-git commit -m "Initial commit: Solana Global Tech dashboard"
-git branch -M main
-git remote add origin git@github.com:<SEU_USER>/solana-global-tech.git
-git push -u origin main
-```
+## Tech stack
 
-### 3. Conectar no Render
-1. Entre em https://dashboard.render.com
-2. **New +** → **Blueprint**
-3. Conecte sua conta do GitHub e selecione o repo `solana-global-tech`
-4. Render detecta o `render.yaml` e propõe o service `solana-tech`
-5. **Antes de clicar "Apply"**, na seção de env vars adicione:
-   - `DASHBOARD_PASSWORD` = `REDACTED_PASSWORD`
-6. Clique **Apply** → primeiro build leva ~5 min
-7. URL final: `https://solana-tech.onrender.com`
+| Layer | Tool |
+|---|---|
+| Backend | FastAPI, Uvicorn |
+| Database | SQLite (`backend/db/dashboard.db`, committed to the repo) |
+| Frontend | Alpine.js + Tailwind CSS via CDN — no build step |
+| Charts | Inline SVG (no chart library dependency) |
+| Data ingestion | `yfinance`, `finnhub-python`, `lxml` (for earnings dates) |
+| Deploy | Render (free tier) |
 
-### 4. Teste
-Abrir a URL → deve pedir usuário/senha (`solana` / a senha acima) → depois abre o dashboard normal.
+No Webpack, no React, no npm, no Docker. The whole frontend is three
+self-contained HTML files served by FastAPI.
 
 ---
 
-## Atualizações (dia a dia)
+## Quickstart (local)
 
-Toda vez que rodar ETL ou editar seeds, faz push do DB atualizado:
+```bash
+git clone https://github.com/figoux/solana-capital-global-tech-equities.git
+cd solana-capital-global-tech-equities
 
-```powershell
-cd "C:\Users\filip\OneDrive\Documentos\Claude\Projects\Solana Global Tech"
+pip install -r requirements.txt
 
-# 1. Rodar ETL local (exemplo pré-earnings)
-python -m backend.etl.prices_yf
-python -m backend.etl.fundamentals_yf
-python -m backend.etl.events_finnhub
-python -m backend.etl.pairs_compute
+# The DB ships populated in the repo — no setup needed to view existing data
+uvicorn backend.api.server:app --host 127.0.0.1 --port 8000
 
-# 2. Commit DB + push
-git add backend/db/dashboard.db
-git commit -m "Daily ETL refresh"
-git push
-
-# Render auto-deploya em ~2 min. Time vê os dados novos.
+# Open http://127.0.0.1:8000
 ```
 
-Se editou código (não só dados):
-```powershell
-git add backend/ frontend/
-git commit -m "descreva a mudança"
-git push
+That's it. The dashboard works against the snapshot of `dashboard.db` in the
+repo. No API keys, no env vars, no auth required for read-only viewing.
+
+## Quickstart (deploy)
+
+The included `render.yaml` is a Render Blueprint. Connect the repo to Render
+and it provisions a free web service automatically.
+
+```
+https://dashboard.render.com → New + → Blueprint → connect this repo → Apply
+```
+
+Build takes ~5 minutes. After that, every `git push` triggers a redeploy in
+~2 minutes.
+
+If you want to gate your deployment behind HTTP Basic auth (e.g. for an
+internal-only mirror), set `DASHBOARD_PASSWORD` as an env var on the service
+— the server picks it up automatically and requires login. Leave it unset
+for an open, public dashboard.
+
+---
+
+## Refreshing the data (ETL pipeline)
+
+The ETL is a sequence of Python modules. Each can be run independently or as
+part of the daily refresh script.
+
+```bash
+# 1. Universe & taxonomy (one-time or after CSV edits)
+python -m backend.etl.universe                  # loads universe.csv → companies table
+python -m backend.etl.business_exposures_seed   # taxonomy of 27 exposure buckets
+python -m backend.etl.exposures_seed            # ticker → bucket weights
+python -m backend.etl.themes_seed               # theme definitions
+python -m backend.etl.theme_mapping_seed        # theme → bucket weights
+
+# 2. Market data refresh (run daily)
+python -m backend.etl.prices_yf                 # 2y of daily OHLCV
+python -m backend.etl.fundamentals_yf           # multiples, EPS/revenue estimates
+python -m backend.etl.vol_yf                    # realized & implied vol from options
+python -m backend.etl.earnings_cal              # upcoming earnings via Finnhub + yfinance
+python -m backend.etl.earnings_history_yf       # historical day-after reactions
+
+# 3. Recompute derivatives
+python -m backend.etl.pairs_compute             # cosine similarity matrix
+```
+
+`scripts/daily_update.ps1` runs the full sequence and commits the DB. We have
+it scheduled at 07:00 daily via Windows Task Scheduler. A `cron` equivalent
+on Linux is straightforward.
+
+### Optional: Finnhub API key
+
+`earnings_cal.py` uses Finnhub for forward-looking earnings calendar coverage
+that yfinance misses. The free tier is sufficient.
+
+```bash
+cp .env.example .env
+# Edit .env and set FINNHUB_API_KEY
+```
+
+Without a key, the script falls back to `yfinance.calendar` (works but covers
+fewer names).
+
+---
+
+## Customizing for your own universe
+
+The default universe is 130 global tech tickers (US, EU, Asia). To adapt to
+your own coverage:
+
+1. **Edit `universe.csv`** — one row per ticker. Required fields: `ticker`,
+   `yahoo_ticker`, `name`, `subsector`, `country`, `currency`. Set
+   `is_private=1` for unlisted names you want tagged but not fetched.
+
+2. **Edit `backend/etl/exposures_seed.py`** — map each ticker to one or more
+   business exposure buckets (weights sum to 100). The 27 buckets cover
+   Consumer, Cloud/Data, Hardware/Semis, Fintech, and Frontier categories.
+   Add new buckets in `business_exposures_seed.py` if your domain needs them.
+
+3. **Edit `backend/etl/themes_seed.py`** — define investment themes and rate
+   each `(theme × subsector)` cell from −2 (very bearish) to +2 (very bullish)
+   with an optional markdown rationale.
+
+4. **Re-run the seed scripts** in the order shown above, then `pairs_compute`
+   to recompute the similarity matrix.
+
+The dashboard reflects changes automatically on the next request.
+
+---
+
+## Project structure
+
+```
+.
+├── backend/
+│   ├── api/
+│   │   └── server.py            # FastAPI app + all REST endpoints
+│   ├── db/
+│   │   ├── dashboard.db         # SQLite snapshot (committed)
+│   │   └── schema.sql           # canonical schema
+│   └── etl/                     # one module per pipeline stage
+├── frontend/
+│   ├── index.html               # dashboard home — heatmap + upcoming earnings
+│   ├── company.html             # per-ticker drill-down
+│   ├── pair.html                # pair workspace with 12m chart
+│   └── theme.html               # theme drill-down with suggested basket
+├── scripts/
+│   ├── daily_update.ps1         # full ETL + git push (Windows)
+│   ├── migrate.py               # idempotent schema migrations
+│   └── db_info.py               # sanity-check counts and freshness
+├── universe.csv                 # ticker universe (editable)
+├── render.yaml                  # Render Blueprint
+└── requirements.txt
 ```
 
 ---
 
-## Free tier Render — coisas a saber
+## Methodology notes
 
-- **Spin-down**: após 15 min sem tráfego, serviço dorme. Primeiro request acorda (~30s de latência).
-- **Quota**: 750h/mês (uma instância rodando 24/7 cabe).
-- **RAM**: 512 MB — suficiente pro dashboard (SQLite + FastAPI).
-- **Disk**: read-only no free tier — por isso DB fica no git.
+**Cosine similarity for pairs.** Each ticker is a vector in 27-dimensional
+exposure space (one dimension per business bucket, weight 0–100). Pair
+similarity is the cosine of the angle between two such vectors. The matrix
+is stored in `pairs_similarity` and the top-N peers per ticker are surfaced
+in the UI. Values above 0.7 usually mean "trades as a pair," below 0.4 means
+"different businesses despite shared subsector."
 
-Se o time reclamar da latência do spin-down, upgrade pra **Starter ($7/mês)** = sempre quente.
+**Theme scores.** A `(ticker × theme)` score is the weighted sum of the
+ticker's exposure weights times the theme's bucket weights, normalized to
+0–100. A manual `direction_override` can pin a ticker's direction (long/short)
+inside a theme regardless of its subsector-level bullishness rating.
+
+**Day-after reactions.** For each historical earnings date, the reaction
+is `close_after / close_before − 1`, where the choice of `before`/`after`
+depends on whether the company reports BMO (before market open) or AMC
+(after market close). When the timing is unknown, the fallback compares
+`close[D+1]` to `close[D−1]` which captures the event either way.
+
+**IV / RV / skew.** Implied vol is the median of ATM puts/calls in the
+nearest two expiries weighted to 30-day and 60-day buckets. Skew is the
+spread between the 25-delta put IV and the 25-delta call IV. Realized
+vol is the annualized close-to-close standard deviation over the trailing
+30 and 60 sessions.
 
 ---
 
-## Desenvolvimento local
+## Limitations & known gaps
 
-```powershell
-cd "C:\Users\filip\OneDrive\Documentos\Claude\Projects\Solana Global Tech"
-python -m uvicorn backend.api.server:app --host 127.0.0.1 --port 8000
-```
-
-Local **não pede senha** porque `DASHBOARD_PASSWORD` não está setada no `.env` local. Se quiser testar auth localmente, seta antes:
-```powershell
-$env:DASHBOARD_PASSWORD="REDACTED_PASSWORD"
-python -m uvicorn backend.api.server:app --host 127.0.0.1 --port 8000
-```
+- SQLite single-file storage is fine for read-heavy single-process workloads,
+  not for concurrent writes. Don't run the ETL while uvicorn is hot.
+- yfinance options chains are unreliable for some non-US listings (notably
+  Taiwan and Hong Kong). Those tickers show RV but no IV/skew.
+- The free Render tier spins down after 15 minutes of inactivity. First
+  request after spin-down takes ~30 seconds. Upgrade tier to keep warm.
+- Earnings history depth depends on `yfinance.get_earnings_dates()`, which
+  typically returns 4–8 past quarters. Recently-IPO'd names will have shorter
+  histories.
 
 ---
 
-## Rotatividade de senha
+## Contributing
 
-Se precisar trocar:
-1. Gerar nova: `python -c "import secrets; print(secrets.token_urlsafe(18))"`
-2. No Render dashboard: service → Environment → editar `DASHBOARD_PASSWORD`
-3. Render faz redeploy automático em ~1 min
-4. Comunica ao time (email/Slack)
+PRs welcome, especially:
 
-Nenhum código precisa mudar.
+- **New universe entries** with reasoned exposure splits
+- **New themes** with subsector ratings and rationale
+- **Frontend additions** that respect the "no build step" constraint
+- **ETL connectors** for non-yfinance data sources (Polygon, Refinitiv, etc.)
+
+Please open an issue first for anything that changes the schema or the API
+surface.
+
+---
+
+## License
+
+MIT — see [LICENSE](./LICENSE).

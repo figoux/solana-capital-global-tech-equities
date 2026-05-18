@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Theme — Solana Global Tech</title>
+  <title>Theme — Solana Capital Global Tech Equities</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -332,16 +332,4 @@
         return Number(x).toFixed(1) + (suffix || '');
       },
       fmtPct(x) { return (x === null || x === undefined) ? '—' : (x*100).toFixed(1) + '%'; },
-      colorPct(x) {
-        if (x === null || x === undefined) return '';
-        return x > 0 ? 'text-emerald-400' : (x < 0 ? 'text-red-400' : '');
-      },
-      ivRv(t) {
-        if (!t.iv_30d_atm || !t.rv_30d) return '—';
-        return (t.iv_30d_atm / t.rv_30d).toFixed(2) + 'x';
-      },
-    }));
-  });
-</script>
-</body>
-</html>
+      colorPct(x) {

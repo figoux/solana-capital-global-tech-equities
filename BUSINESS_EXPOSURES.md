@@ -1,4 +1,7 @@
-# Business Exposures — Taxonomia e Workflow
+# Business Exposures — Taxonomy and Workflow
+
+> This document is in Portuguese for now. A PR translating it to English
+> is welcome — the methodology is unchanged either way.
 
 **Objetivo:** decompor cada stock em pesos % pelas linhas de negócio/value drivers, para habilitar:
 1. Cálculo de similaridade estrutural entre stocks (cosine similarity)
@@ -142,4 +145,4 @@ pdd  = {"ecommerce": 100}
 2. Filtra X com `cosine_sim > 0.4` AND mesmo subsetor OR mesma top-exposure
 3. Para cada candidato, pega `iv_30d_atm` de A e de X (se disponível)
 4. Rankeia por `abs(iv_A - iv_X)` → pares com maior spread de IV primeiro
-5. UI mostra sugestão: "Long A / Short X — overlap 62% em `ecommerce`, spread IV30 = +8pp"
+5. UI mostra sugestão: "Long A / Short X — overlap 62% em `ecommerce`, spread IV

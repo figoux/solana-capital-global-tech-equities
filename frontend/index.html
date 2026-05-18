@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Solana Global Tech — Dashboard</title>
+  <title>Solana Capital Global Tech Equities — Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -38,7 +38,7 @@
   <!-- Header -->
   <header class="flex items-end justify-between mb-6 border-b border-slate-700 pb-4">
     <div>
-      <h1 class="text-2xl font-bold tracking-tight">Solana Global Tech</h1>
+      <h1 class="text-2xl font-bold tracking-tight">Solana Capital Global Tech Equities</h1>
       <p class="muted text-sm" x-text="headerInfo()"></p>
     </div>
     <div class="text-right text-xs muted">
@@ -177,7 +177,7 @@
   </section>
 
   <footer class="muted text-xs text-center pt-4 border-t border-slate-800">
-    Solana Global Tech · privado · data: yfinance + Finnhub · <a class="underline" href="/api/heatmap" target="_blank">raw API</a>
+    Solana Capital Global Tech Equities · data: yfinance + Finnhub · <a class="underline" href="/api/heatmap" target="_blank">raw API</a> · <a class="underline" href="https://github.com/figoux/solana-capital-global-tech-equities" target="_blank">source</a>
   </footer>
 </div>
 
@@ -290,11 +290,4 @@
         return ticker;
       },
       goTicker() {
-        const t = this.tickerQuery.trim().toUpperCase();
-        if (t) window.location.href = '/company/' + t;
-      },
-    }));
-  });
-</script>
-</body>
-</html>
+        const t = this.tickerQ

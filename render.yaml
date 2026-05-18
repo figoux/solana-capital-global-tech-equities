@@ -1,20 +1,23 @@
-# Render Blueprint — Solana Global Tech
+# Render Blueprint — Solana Capital Global Tech Equities
 # Docs: https://render.com/docs/blueprint-spec
 #
-# Apos dar push do repo:
-#   1. Em render.com -> New + -> Blueprint -> conectar repo GitHub
-#   2. Render le esse arquivo e propoe o servico web
-#   3. Antes do deploy, setar em "Environment":
-#        DASHBOARD_PASSWORD = <seu token forte>
-#   4. Deploy. URL final: https://solana-tech.onrender.com
+# To deploy your own instance:
+#   1. Fork this repo on GitHub.
+#   2. On render.com → New + → Blueprint → connect the forked repo.
+#   3. Render reads this file and provisions the web service automatically.
+#   4. (Optional) To gate behind HTTP Basic auth, add a DASHBOARD_PASSWORD env
+#      var in the service "Environment" tab. The server picks it up at boot.
+#      Leave it unset for a public, no-auth dashboard.
 #
-# ETL NAO roda aqui — continua no laptop do Filipe.
-# Fluxo de update: rodar seeds local -> git add backend/db/dashboard.db -> commit -> push.
-# Render auto-deploya em ~2 min.
+# The ETL pipeline does NOT run on Render. Render serves the latest snapshot
+# of backend/db/dashboard.db committed to the repo. Refresh the data by
+# running `scripts/daily_update.ps1` (or its equivalent) on any machine with
+# the repo cloned — it runs the ETL, commits the updated DB, and pushes.
+# Render auto-redeploys with the new snapshot in ~2 minutes.
 
 services:
   - type: web
-    name: solana-tech
+    name: solana-capital-tech-equities
     runtime: python
     plan: free
     region: oregon
@@ -25,7 +28,5 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.4"
-      - key: DASHBOARD_USER
-        value: "solana"
-      - key: DASHBOARD_PASSWORD
-        sync: false  # setar manualmente no dashboard Render
+      # DASHBOARD_PASSWORD is intentionally unset by default → public access.
+      # Set it manually in the Render dashboard if you want to gate the app.

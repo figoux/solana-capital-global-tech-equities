@@ -1,5 +1,5 @@
 """
-FastAPI server — Solana Global Tech dashboard.
+FastAPI server — Solana Capital Global Tech Equities dashboard.
 
 Run:
     uvicorn backend.api.server:app --reload --host 127.0.0.1 --port 8000
@@ -42,8 +42,9 @@ DB_PATH = ROOT / "backend" / "db" / "dashboard.db"
 FRONTEND_DIR = ROOT / "frontend"
 
 # -------------------- Auth (HTTP Basic, opt-in via env) --------------------
-# Local dev: não seta DASHBOARD_PASSWORD → sem auth
-# Render/prod: seta DASHBOARD_USER + DASHBOARD_PASSWORD → exige login em TODAS rotas
+# Public deploy: DASHBOARD_PASSWORD unset -> no auth, open dashboard
+# Private mirror: set DASHBOARD_USER + DASHBOARD_PASSWORD in env -> auth required on all routes
+#                 (the /health endpoint is always public for the platform healthcheck)
 _security = HTTPBasic(auto_error=False)
 
 
@@ -51,18 +52,18 @@ def _auth(
     request: Request,
     creds: Optional[HTTPBasicCredentials] = Depends(_security),
 ) -> str:
-    # Health endpoint sempre publico (Render healthcheck)
+    # /health is always public (platform healthcheck)
     if request.url.path == "/health":
         return "health"
     expected_pass = os.environ.get("DASHBOARD_PASSWORD", "")
     if not expected_pass:
-        return "anon"  # auth disabled (local dev)
-    expected_user = os.environ.get("DASHBOARD_USER", "solana")
+        return "anon"  # auth disabled — public deploy
+    expected_user = os.environ.get("DASHBOARD_USER", "admin")
     if creds is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Auth required",
-            headers={"WWW-Authenticate": 'Basic realm="Solana Global Tech"'},
+            headers={"WWW-Authenticate": 'Basic realm="Solana Capital Global Tech Equities"'},
         )
     ok_user = secrets.compare_digest(creds.username, expected_user)
     ok_pass = secrets.compare_digest(creds.password, expected_pass)
@@ -70,12 +71,12 @@ def _auth(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
-            headers={"WWW-Authenticate": 'Basic realm="Solana Global Tech"'},
+            headers={"WWW-Authenticate": 'Basic realm="Solana Capital Global Tech Equities"'},
         )
     return creds.username
 
 
-app = FastAPI(title="Solana Global Tech", dependencies=[Depends(_auth)])
+app = FastAPI(title="Solana Capital Global Tech Equities", dependencies=[Depends(_auth)])
 
 
 @app.get("/health")
@@ -776,19 +777,4 @@ def set_direction_override(body: DirectionOverrideBody):
         INSERT INTO theme_ticker_exposure (theme_id, ticker, exposure, direction, direction_override, rationale_md, updated_at, source)
         VALUES (?, ?, 0, 'long', ?, ?, CURRENT_TIMESTAMP, 'manual')
         ON CONFLICT(theme_id, ticker) DO UPDATE SET
-          direction_override=excluded.direction_override,
-          rationale_md=COALESCE(excluded.rationale_md, theme_ticker_exposure.rationale_md),
-          updated_at=CURRENT_TIMESTAMP,
-          source='manual'
-        """,
-        (body.theme_id, body.ticker, body.direction, body.rationale_md),
-    )
-    conn.commit()
-    conn.close()
-    return {"ok": True, "theme_id": body.theme_id, "ticker": body.ticker, "direction": body.direction}
-
-
-# -------------------- Static files --------------------
-
-if (FRONTEND_DIR / "assets").exists():
-    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
+          direction_override=excluded.d

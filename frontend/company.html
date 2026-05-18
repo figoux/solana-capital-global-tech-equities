@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Company — Solana Global Tech</title>
+  <title>Company — Solana Capital Global Tech Equities</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -352,16 +352,4 @@
       },
       shortName(name) {
         if (!name) return '';
-        const cleaned = name.replace(/\s+(Group|Holdings|Inc|Corp|Corporation|Ltd|Limited|ADR|Class\s+[A-C]|Co)\.?$/gi, '').trim();
-        return cleaned.length > 18 ? cleaned.slice(0, 15) + '…' : cleaned;
-      },
-      withCo(ticker, name) {
-        if (!ticker) return '';
-        if (this.isNumericTicker(ticker) && name) return `${ticker} (${this.shortName(name)})`;
-        return ticker;
-      },
-    }));
-  });
-</script>
-</body>
-</html>
+        const cleaned = name.replace(/\s+(Group|Holdings|Inc|Corp|Corporation|Ltd|Limited|ADR|Class\s+[A-C]|Co)

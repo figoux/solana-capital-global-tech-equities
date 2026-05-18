@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Pair — Solana Global Tech</title>
+  <title>Pair — Solana Capital Global Tech Equities</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -456,20 +456,4 @@
         const w = container ? container.querySelector('svg')?.clientWidth || 800 : 800;
         let leftPx = (this.hover.pxPct * w) + 10;
         if (this.hover.pxPct > 0.7) leftPx = (this.hover.pxPct * w) - 150;
-        return Math.max(8, leftPx);
-      },
-      tooltipTop() {
-        return 8;
-      },
-      spreadHint() {
-        const t = this.data?.prices_12m?.totals;
-        if (!t || t.spread_pt === null) return '';
-        const a = this.data?.a?.ticker, b = this.data?.b?.ticker;
-        if (Math.abs(t.spread_pt) < 1) return 'Par andou em linha';
-        return t.spread_pt > 0 ? `${a} outperform` : `${b} outperform`;
-      },
-    }));
-  });
-</script>
-</body>
-</html>
+        return Math.max(8, le
