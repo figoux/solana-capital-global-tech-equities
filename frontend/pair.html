@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Pair — Solana Capital Global Tech Equities</title>
@@ -33,7 +33,7 @@
     </div>
   </nav>
 
-  <div x-show="!data" class="muted">Carregando par…</div>
+  <div x-show="!data" class="muted">Loading pair…</div>
 
   <!-- Header -->
   <header x-show="data" class="mb-6 border-b border-slate-700 pb-4">
@@ -61,7 +61,7 @@
       <h2 class="text-emerald-400 font-bold text-lg" x-text="data?.a?.ticker + ' · stats'"></h2>
       <dl class="kv mt-2">
         <dt>Mkt cap</dt><dd x-text="fmtB(data?.a?.mkt_cap_usd)"></dd>
-        <dt>Próx. EPS</dt><dd x-text="data?.a?.next_earnings_date || '—'"></dd>
+        <dt>Next EPS</dt><dd x-text="data?.a?.next_earnings_date || '—'"></dd>
         <dt>Fwd P/E NTM</dt><dd x-text="fmt(data?.a?.fwd_pe_ntm, 'x')"></dd>
         <dt>Fwd P/E FY1</dt><dd x-text="fmt(data?.a?.fwd_pe_fy1, 'x')"></dd>
         <dt>Fwd P/E FY2</dt><dd x-text="fmt(data?.a?.fwd_pe_fy2, 'x')"></dd>
@@ -81,7 +81,7 @@
       <h2 class="text-blue-400 font-bold text-lg" x-text="data?.b?.ticker + ' · stats'"></h2>
       <dl class="kv mt-2">
         <dt>Mkt cap</dt><dd x-text="fmtB(data?.b?.mkt_cap_usd)"></dd>
-        <dt>Próx. EPS</dt><dd x-text="data?.b?.next_earnings_date || '—'"></dd>
+        <dt>Next EPS</dt><dd x-text="data?.b?.next_earnings_date || '—'"></dd>
         <dt>Fwd P/E NTM</dt><dd x-text="fmt(data?.b?.fwd_pe_ntm, 'x')"></dd>
         <dt>Fwd P/E FY1</dt><dd x-text="fmt(data?.b?.fwd_pe_fy1, 'x')"></dd>
         <dt>Fwd P/E FY2</dt><dd x-text="fmt(data?.b?.fwd_pe_fy2, 'x')"></dd>
@@ -112,14 +112,14 @@
       <div class="bg-slate-900 rounded p-3">
         <div class="text-xs muted">Vol-neutral ratio (A/B)</div>
         <div class="text-xl font-bold num mt-1" x-text="data?.ratios?.vol_neutral_ratio ?? '—'"></div>
-        <div class="text-xs muted mt-1">$ notional A × ratio = $ notional B pra vol-neutro</div>
+        <div class="text-xs muted mt-1">$ notional A × ratio = $ notional B for vol-neutral</div>
       </div>
       <div class="bg-slate-900 rounded p-3">
         <div class="text-xs muted">P/E FY1 spread</div>
         <div class="text-xl font-bold num mt-1"
              :class="data?.ratios?.pe_spread > 0 ? 'text-emerald-400' : (data?.ratios?.pe_spread < 0 ? 'text-red-400' : '')"
              x-text="data?.ratios?.pe_spread !== undefined ? (data.ratios.pe_spread > 0 ? '+' : '') + data.ratios.pe_spread + 'x' : '—'"></div>
-        <div class="text-xs muted mt-1">A mais caro que B se positivo</div>
+        <div class="text-xs muted mt-1">A pricier than B when positive</div>
       </div>
       <div class="bg-slate-900 rounded p-3">
         <div class="text-xs muted">Mkt cap ratio (A/B)</div>
@@ -129,7 +129,7 @@
     </div>
 
     <div class="mt-4 p-3 rounded border border-emerald-700 bg-emerald-950/40 text-sm" x-show="data?.ratios?.iv_spread_pts !== undefined">
-      <div class="muted text-xs uppercase mb-1">Sugestão (long cheap IV / short rich IV)</div>
+      <div class="muted text-xs uppercase mb-1">Suggestion (long cheap IV / short rich IV)</div>
       <div class="font-semibold" x-text="suggestedTrade()"></div>
       <div class="text-xs muted mt-1" x-text="suggestedSizing()"></div>
     </div>
@@ -145,7 +145,7 @@
           <span class="mx-1">→</span>
           <span x-text="data?.prices_12m?.totals?.end_date"></span>
           <span class="mx-1">·</span>
-          <span x-text="data?.prices_12m?.totals?.days + ' dias úteis comuns'"></span>
+          <span x-text="data?.prices_12m?.totals?.days + ' common trading days'"></span>
         </span>
       </div>
     </div>
@@ -247,14 +247,14 @@
         <span x-text="data?.a?.ticker"></span></span>
       <span class="flex items-center gap-2"><span class="inline-block w-4 h-1 bg-blue-400 rounded"></span>
         <span x-text="data?.b?.ticker"></span></span>
-      <span class="muted">Passe o mouse pra ver valores</span>
+      <span class="muted">Hover for values</span>
     </div>
   </section>
 
   <!-- Exposures overlap -->
   <section x-show="data" class="mb-6 bg-slate-800 border border-slate-700 rounded p-4">
     <h2 class="text-sm font-semibold muted uppercase mb-3">Business exposures — overlap</h2>
-    <p class="text-xs muted mb-3">Pesos em % do revenue/exposição. Overlap = min(A, B). Ordenado por overlap desc.</p>
+    <p class="text-xs muted mb-3">Weights in % of revenue/exposure. Overlap = min(A, B). Sorted by overlap desc.</p>
     <div class="space-y-2 text-xs">
       <template x-for="e in data?.exposures_compared || []" :key="e.exposure_id">
         <div class="bar-row">
@@ -266,7 +266,7 @@
           <div class="bar-r"><div :style="'width:' + (e.weight_b || 0) + '%'"></div></div>
         </div>
       </template>
-      <p x-show="(data?.exposures_compared || []).length === 0" class="muted">Nenhuma exposição gravada.</p>
+      <p x-show="(data?.exposures_compared || []).length === 0" class="muted">No exposures recorded.</p>
     </div>
     <div class="mt-3 flex gap-6 text-xs">
       <span class="flex items-center gap-2"><span class="inline-block w-4 h-2 bg-emerald-500 rounded"></span>
@@ -297,7 +297,7 @@
         const a = parts[parts.length - 2];
         const b = parts[parts.length - 1];
         const r = await fetch(`/api/pair/${a}/${b}`);
-        if (!r.ok) { document.body.innerHTML = '<pre class="p-6">Par não encontrado</pre>'; return; }
+        if (!r.ok) { document.body.innerHTML = '<pre class="p-6">Pair not found</pre>'; return; }
         this.data = await r.json();
         document.title = this.data.a.ticker + ' × ' + this.data.b.ticker;
       },
@@ -309,14 +309,14 @@
       ivSpreadHint() {
         const s = this.data?.ratios?.iv_spread_pts;
         if (s === undefined) return '';
-        if (Math.abs(s) < 1) return 'Spread pequeno — pouca assimetria de vol';
-        return s > 0 ? 'A mais caro em vol' : 'B mais caro em vol';
+        if (Math.abs(s) < 1) return 'Spread small — little vol asymmetry';
+        return s > 0 ? 'A richer in vol' : 'B richer in vol';
       },
       suggestedTrade() {
         const d = this.data;
         if (!d) return '';
         const s = d.ratios?.iv_spread_pts;
-        if (s === undefined || Math.abs(s) < 1) return 'Sem assimetria IV relevante — considerar fundamentals/cosine';
+        if (s === undefined || Math.abs(s) < 1) return 'No relevant IV asymmetry — consider fundamentals/cosine';
         const cheap = s > 0 ? d.b.ticker : d.a.ticker;
         const rich  = s > 0 ? d.a.ticker : d.b.ticker;
         return `Long ${cheap} vol / Short ${rich} vol`;
@@ -465,7 +465,7 @@
         const t = this.data?.prices_12m?.totals;
         if (!t || t.spread_pt === null) return '';
         const a = this.data?.a?.ticker, b = this.data?.b?.ticker;
-        if (Math.abs(t.spread_pt) < 1) return 'Par andou em linha';
+        if (Math.abs(t.spread_pt) < 1) return 'Pair moved together';
         return t.spread_pt > 0 ? `${a} outperform` : `${b} outperform`;
       },
     }));

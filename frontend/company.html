@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Company — Solana Capital Global Tech Equities</title>
@@ -13,7 +13,7 @@
     .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 13px; }
     .kv dt { color: #9ca3af; }
     .kv dd { text-align: right; font-variant-numeric: tabular-nums; }
-    /* Exposure grid por categoria */
+    /* Exposure grid by category */
     .exp-cat-title {
       font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
       color: #9ca3af; border-bottom: 1px solid #334155; padding-bottom: 2px; margin-bottom: 4px;
@@ -48,7 +48,7 @@
     </div>
   </header>
 
-  <div x-show="!data?.company" class="muted">Carregando…</div>
+  <div x-show="!data?.company" class="muted">Loading…</div>
 
   <!-- 3-col layout -->
   <div x-show="data?.company" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -71,7 +71,7 @@
         <dt>Rev growth FY1</dt><dd :class="colorPct(data?.multiples?.rev_growth_fy1)" x-text="fmtPct(data?.multiples?.rev_growth_fy1)"></dd>
         <dt>Div yield</dt><dd x-text="fmtPct(data?.multiples?.dividend_yield)"></dd>
       </dl>
-      <p x-show="!data?.multiples" class="muted text-sm">Sem snapshot de múltiplos.</p>
+      <p x-show="!data?.multiples" class="muted text-sm">No multiples snapshot available.</p>
     </section>
 
     <!-- Col 2: Next earnings + estimates -->
@@ -98,7 +98,7 @@
           </div>
         </template>
       </div>
-      <p x-show="(data?.earnings_reactions || []).length === 0" class="muted text-xs mb-4">Sem histórico de reações ainda.</p>
+      <p x-show="(data?.earnings_reactions || []).length === 0" class="muted text-xs mb-4">No reaction history yet.</p>
 
       <h2 class="text-sm font-semibold muted uppercase mb-2">Consensus estimates</h2>
       <table class="w-full text-xs">
@@ -131,10 +131,10 @@
           <span class="text-xs bg-emerald-900 text-emerald-200 px-2 py-1 rounded"
                 x-text="t.name + ' · ' + t.exposure"></span>
         </template>
-        <span x-show="(data?.themes || []).length===0" class="muted text-xs">Nenhum tema tagueado — edite em breve.</span>
+        <span x-show="(data?.themes || []).length===0" class="muted text-xs">No themes tagged — edit soon.</span>
       </div>
 
-      <h2 class="text-sm font-semibold muted uppercase mb-3">Business exposures por categoria</h2>
+      <h2 class="text-sm font-semibold muted uppercase mb-3">Business exposures by category</h2>
       <div x-show="(data?.exposures || []).length === 0" class="muted text-xs mb-4">Sem exposure registrada.</div>
       <div x-show="(data?.exposures || []).length > 0" class="space-y-3">
         <template x-for="(items, cat) in exposuresByCategory()" :key="cat">
@@ -164,7 +164,7 @@
           <dt>Source</dt><dd x-text="data?.volatility?.source + (data?.volatility?.locked ? ' 🔒' : '')"></dd>
         </dl>
       </div>
-      <p x-show="!data?.volatility" class="muted text-xs">Sem snapshot de vol (ETL pending).</p>
+      <p x-show="!data?.volatility" class="muted text-xs">No vol snapshot (ETL pending).</p>
     </section>
 
   </div>
@@ -172,12 +172,12 @@
   <!-- Comparative exposures matrix (ticker × top peers) -->
   <section x-show="data?.company && exp" class="mt-6 bg-slate-800 border border-slate-700 rounded p-4">
     <div class="flex items-baseline justify-between mb-3">
-      <h2 class="text-sm font-semibold muted uppercase">Exposures vs peers · matriz</h2>
+      <h2 class="text-sm font-semibold muted uppercase">Exposures vs peers · matrix</h2>
       <span class="text-xs muted">
-        Focal + top <span x-text="exp && (exp.tickers.length - 1)"></span> peers por cosine sim · cell value = weight % no bucket
+        Focal + top <span x-text="exp && (exp.tickers.length - 1)"></span> peers by cosine sim · cell value = weight % in bucket
       </span>
     </div>
-    <div x-show="!exp" class="muted text-sm">Carregando matriz…</div>
+    <div x-show="!exp" class="muted text-sm">Loading matrix…</div>
     <div x-show="exp" class="overflow-x-auto">
       <table class="text-xs" style="border-collapse: separate; border-spacing: 0;">
         <thead class="mx-header">
@@ -211,7 +211,7 @@
       </table>
     </div>
     <p class="mt-2 text-[11px] muted">
-      Verde mais forte = peso maior. Coluna destacada = ticker focal. Número em cada célula é o weight_pct (0-100).
+      Stronger green = higher weight. Highlighted column = focal ticker. Each cell value is the weight_pct (0-100).
     </p>
   </section>
 
@@ -221,14 +221,14 @@
       <h2 class="text-sm font-semibold muted uppercase">Pair candidates · cosine similarity peers</h2>
       <span class="text-xs muted" x-text="pairs ? (pairs.peers.length + ' peers · focal IV/RV: ' + (pairs.focal.iv_rv_ratio || '—')) : ''"></span>
     </div>
-    <div x-show="!pairs" class="muted text-sm">Carregando…</div>
-    <div x-show="pairs && pairs.peers.length === 0" class="muted text-sm">Nenhum peer acima do threshold de similaridade.</div>
+    <div x-show="!pairs" class="muted text-sm">Loading…</div>
+    <div x-show="pairs && pairs.peers.length === 0" class="muted text-sm">No peer above the similarity threshold.</div>
     <div x-show="pairs && pairs.peers.length > 0" class="overflow-x-auto">
       <table class="w-full text-xs">
         <thead>
           <tr class="muted">
             <th class="text-left py-1">Peer</th>
-            <th class="text-left py-1">Subsetor</th>
+            <th class="text-left py-1">Subsector</th>
             <th class="text-right py-1">Cosine</th>
             <th class="text-left py-1">Overlap top</th>
             <th class="text-right py-1">Mkt cap</th>
@@ -237,8 +237,8 @@
             <th class="text-right py-1">IV spread</th>
             <th class="text-right py-1">RV spread</th>
             <th class="text-right py-1">IV/RV</th>
-            <th class="text-left py-1">Próx. EPS</th>
-            <th class="text-right py-1">Ação</th>
+            <th class="text-left py-1">Next EPS</th>
+            <th class="text-right py-1">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -270,7 +270,7 @@
       </table>
     </div>
     <p class="mt-2 text-[11px] muted">
-      IV spread positivo = peer mais caro em vol (candidato a short vol vs focal). RV spread = diferença realized. IV/RV > 1 = IV premium sobre realized.
+      Positive IV spread = peer with richer vol (candidate to short vol vs focal). RV spread = realized vol difference. IV/RV > 1 = IV premium over realized.
     </p>
   </section>
 
@@ -306,7 +306,7 @@
           const cat = e.category || 'Outros';
           (out[cat] ||= []).push(e);
         }
-        // Dentro de cada categoria ordena por weight desc
+        // Sort by weight desc within each category
         for (const k in out) out[k].sort((a, b) => b.weight_pct - a.weight_pct);
         return out;
       },

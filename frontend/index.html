@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Solana Capital Global Tech Equities — Dashboard</title>
@@ -66,10 +66,10 @@
                placeholder="ex: NVDA"
                class="w-24 bg-slate-800 border border-slate-700 rounded px-2 py-1 uppercase" />
         <button x-show="focalData" @click="focalTicker=''; focalData=null"
-                class="muted hover:text-red-400">✕ limpar</button>
+                class="muted hover:text-red-400">✕ clear</button>
         <span x-show="focalData" class="ml-2 muted">
           <span class="text-amber-400 font-semibold" x-text="withCo(focalData?.ticker, focalData?.name)"></span>
-          · subsetor: <span x-text="focalData?.subsector"></span>
+          · subsector: <span x-text="focalData?.subsector"></span>
         </span>
       </div>
     </div>
@@ -113,7 +113,7 @@
       +2 very bullish · +1 bullish · 0 neutral · −1 bearish · −2 very bearish.
       <span x-show="focalData">
         🟠 dot = <span class="text-amber-400 font-semibold" x-text="focalData?.ticker"></span>
-        tem score ≥ 40 naquele tema (dot maior se ≥ 70).
+        has score ≥ 40 in that theme (larger dot if ≥ 70).
       </span>
     </p>
   </section>
@@ -147,7 +147,7 @@
                 <div class="mt-1 flex justify-between text-xs">
                   <span x-text="e.mkt_cap_usd ? ('$' + fmtB(e.mkt_cap_usd)) : '—'"></span>
                   <span>P/E FY1 <span class="font-medium" x-text="fmtPE(e.fwd_pe_fy1)"></span></span>
-                  <span title="EPS FY1 consensus vs TTM — crescimento YoY 1-year forward">
+                  <span title="EPS FY1 consensus vs TTM — 1-year forward YoY growth">
                     EPS FY1 YoY
                     <span :class="e.eps_growth_fy1>0 ? 'text-emerald-400':'text-red-400'"
                                   x-text="fmtPct(e.eps_growth_fy1)"></span>
@@ -155,7 +155,7 @@
                 </div>
                 <div x-show="(e.earnings_reactions || []).length > 0"
                      class="mt-1 text-[11px] muted truncate"
-                     :title="'Reação day-after dos últimos trimestres'">
+                     :title="'Day-after reaction over recent quarters'">
                   Hist:
                   <template x-for="(er, idx) in (e.earnings_reactions || []).slice().reverse()" :key="er.fiscal_period">
                     <span>
@@ -173,7 +173,7 @@
       </template>
     </div>
 
-    <p x-show="earnings.length===0" class="muted text-sm">Nenhum earning no range selecionado.</p>
+    <p x-show="earnings.length===0" class="muted text-sm">No earnings in the selected range.</p>
   </section>
 
   <footer class="muted text-xs text-center pt-4 border-t border-slate-800">
@@ -258,11 +258,11 @@
       },
       formatDay(k) {
         const d = new Date(k + 'T12:00:00');
-        return d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+        return d.toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' });
       },
       headerInfo() {
-        return this.heatmap.themes.length + ' temas · ' +
-               this.heatmap.subsectors.length + ' subsetores · 2026';
+        return this.heatmap.themes.length + ' themes · ' +
+               this.heatmap.subsectors.length + ' subsectors · 2026';
       },
       fmtB(x) {
         if (!x) return '—';

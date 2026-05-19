@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Theme — Solana Capital Global Tech Equities</title>
@@ -37,12 +37,12 @@
     <div class="flex items-baseline gap-3">
       <h1 class="text-3xl font-bold" x-text="data?.theme?.name"></h1>
       <span class="text-xs muted" x-text="'theme_id: ' + (data?.theme?.theme_id || '')"></span>
-      <span class="ml-auto text-sm muted" x-text="data?.total_exposed + ' tickers expostos (score ≥ ' + minScore + ')'"></span>
+      <span class="ml-auto text-sm muted" x-text="data?.total_exposed + ' exposed tickers (score ≥ ' + minScore + ')'"></span>
     </div>
     <p x-show="data?.theme?.description" class="mt-2 text-slate-300 text-sm" x-text="data?.theme?.description"></p>
   </header>
 
-  <div x-show="!data?.theme" class="muted">Carregando…</div>
+  <div x-show="!data?.theme" class="muted">Loading…</div>
 
   <!-- Tabs -->
   <div x-show="data?.theme" class="flex gap-2 mb-4 border-b border-slate-800">
@@ -65,27 +65,27 @@
       <input type="number" step="5" min="5" max="80" x-model.number="topN" @change="load()"
              class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-1 num" />
     </label>
-    <span class="muted ml-auto">Direção default vem de <em>bullishness × subsetor</em>; override por ticker disponível.</span>
+    <span class="muted ml-auto">Default direction comes from <em>bullishness × subsector</em>; per-ticker override available.</span>
   </div>
 
-  <!-- TAB: Tickers expostos -->
+  <!-- TAB: Exposed tickers -->
   <section x-show="data && tab==='tickers'" class="space-y-4">
     <div class="overflow-x-auto border border-slate-800 rounded">
       <table class="w-full text-xs">
         <thead>
           <tr class="bg-slate-800">
             <th class="text-left px-3 py-2">Ticker</th>
-            <th class="text-left px-2 py-2">Subsetor</th>
+            <th class="text-left px-2 py-2">Subsector</th>
             <th class="text-right px-2 py-2">Score</th>
-            <th class="text-center px-2 py-2">Subsetor bull</th>
-            <th class="text-center px-2 py-2">Direção</th>
+            <th class="text-center px-2 py-2">Subsector bull</th>
+            <th class="text-center px-2 py-2">Direction</th>
             <th class="text-right px-2 py-2">Mkt cap</th>
             <th class="text-right px-2 py-2">P/E FY1</th>
             <th class="text-right px-2 py-2">EPS gr</th>
             <th class="text-right px-2 py-2">RV 30d</th>
             <th class="text-right px-2 py-2">IV 30d</th>
             <th class="text-right px-2 py-2">IV/RV</th>
-            <th class="text-left px-2 py-2">Próx. EPS</th>
+            <th class="text-left px-2 py-2">Next EPS</th>
             <th class="px-2 py-2">Override</th>
           </tr>
         </thead>
@@ -134,14 +134,14 @@
         </tbody>
       </table>
     </div>
-    <p x-show="data?.tickers?.length === 0" class="muted text-sm">Nenhum ticker com score ≥ <span x-text="minScore"></span>.</p>
+    <p x-show="data?.tickers?.length === 0" class="muted text-sm">No ticker with score ≥ <span x-text="minScore"></span>.</p>
   </section>
 
   <!-- TAB: Basket sugerido -->
   <section x-show="data && tab==='basket'" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <div class="bg-slate-800 border border-slate-700 rounded p-4">
       <h2 class="text-sm font-semibold muted uppercase mb-2">Longs</h2>
-      <p class="text-xs muted mb-3" x-text="'Equal-weight · ' + (data.basket.longs.length) + ' posições'"></p>
+      <p class="text-xs muted mb-3" x-text="'Equal-weight · ' + (data.basket.longs.length) + ' positions'"></p>
       <table class="w-full text-sm">
         <template x-for="p in data.basket.longs" :key="p.ticker">
           <tr class="border-t border-slate-700">
@@ -152,7 +152,7 @@
           </tr>
         </template>
       </table>
-      <p x-show="data.basket.longs.length===0" class="muted text-sm">Nenhum long sugerido (sem subsetor com bull > 0).</p>
+      <p x-show="data.basket.longs.length===0" class="muted text-sm">No long suggested (no subsector with bull > 0).</p>
     </div>
 
     <div class="bg-slate-800 border border-slate-700 rounded p-4">
@@ -168,14 +168,14 @@
           </tr>
         </template>
       </table>
-      <p x-show="data.basket.shorts.length===0" class="muted text-sm">Nenhum short sugerido.</p>
+      <p x-show="data.basket.shorts.length===0" class="muted text-sm">No short suggested.</p>
     </div>
   </section>
 
   <!-- TAB: Pair trades intra-tema -->
   <section x-show="data && tab==='pairs'" class="space-y-3">
-    <div x-show="!pairs" class="muted">Carregando pares…</div>
-    <div x-show="pairs && pairs.pairs.length===0" class="muted text-sm">Nenhum par com cosine sim suficiente no subset do tema.</div>
+    <div x-show="!pairs" class="muted">Loading pairs…</div>
+    <div x-show="pairs && pairs.pairs.length===0" class="muted text-sm">No pair with sufficient cosine sim in the theme subset.</div>
     <div class="overflow-x-auto border border-slate-800 rounded" x-show="pairs && pairs.pairs.length > 0">
       <table class="w-full text-xs">
         <thead>
@@ -214,9 +214,9 @@
     </div>
   </section>
 
-  <!-- TAB: Earnings próximos -->
+  <!-- TAB: Upcoming earnings -->
   <section x-show="data && tab==='earnings'" class="space-y-4">
-    <p x-show="!data.upcoming_earnings?.length" class="muted text-sm">Nenhum earnings em 4w para tickers do tema.</p>
+    <p x-show="!data.upcoming_earnings?.length" class="muted text-sm">No earnings in the next 4w for theme tickers.</p>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
       <template x-for="e in data.upcoming_earnings" :key="e.ticker + e.fiscal_period">
         <a :href="'/company/' + e.ticker"
@@ -237,11 +237,11 @@
 
   <!-- TAB: Bullishness by subsector -->
   <section x-show="data && tab==='bull'" class="bg-slate-800 border border-slate-700 rounded p-4">
-    <h2 class="text-sm font-semibold muted uppercase mb-3">Bullishness do tema por subsetor</h2>
+    <h2 class="text-sm font-semibold muted uppercase mb-3">Theme bullishness by subsector</h2>
     <table class="w-full text-sm">
       <thead>
         <tr class="muted text-xs">
-          <th class="text-left py-1">Subsetor</th>
+          <th class="text-left py-1">Subsector</th>
           <th class="text-center py-1">Bullishness</th>
         </tr>
       </thead>
@@ -269,18 +269,18 @@
       minScore: 20,
       topN: 30,
       tabs: [
-        { id: 'tickers',  label: 'Tickers expostos' },
+        { id: 'tickers',  label: 'Exposed tickers' },
         { id: 'basket',   label: 'Basket (equal-weight)' },
         { id: 'pairs',    label: 'Pair trades intra-tema' },
-        { id: 'earnings', label: 'Earnings próximos' },
-        { id: 'bull',     label: 'Bullishness matriz' },
+        { id: 'earnings', label: 'Upcoming earnings' },
+        { id: 'bull',     label: 'Bullishness matrix' },
       ],
 
       themeId() { return location.pathname.split('/').pop(); },
 
       async load() {
         const r = await fetch(`/api/theme/${this.themeId()}?min_score=${this.minScore}&top_n=${this.topN}`);
-        if (!r.ok) { document.body.innerHTML = '<pre class="p-6">Tema não encontrado</pre>'; return; }
+        if (!r.ok) { document.body.innerHTML = '<pre class="p-6">Theme not found</pre>'; return; }
         this.data = await r.json();
         document.title = this.data.theme.name + ' · Theme';
         this.loadPairs();
