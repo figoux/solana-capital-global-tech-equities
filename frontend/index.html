@@ -290,4 +290,11 @@
         return ticker;
       },
       goTicker() {
-        const t = this.tickerQ
+        const t = this.tickerQuery.trim().toUpperCase();
+        if (t) window.location.href = '/company/' + t;
+      },
+    }));
+  });
+</script>
+</body>
+</html>

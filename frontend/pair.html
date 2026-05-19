@@ -456,4 +456,20 @@
         const w = container ? container.querySelector('svg')?.clientWidth || 800 : 800;
         let leftPx = (this.hover.pxPct * w) + 10;
         if (this.hover.pxPct > 0.7) leftPx = (this.hover.pxPct * w) - 150;
-        return Math.max(8, le
+        return Math.max(8, leftPx);
+      },
+      tooltipTop() {
+        return 8;
+      },
+      spreadHint() {
+        const t = this.data?.prices_12m?.totals;
+        if (!t || t.spread_pt === null) return '';
+        const a = this.data?.a?.ticker, b = this.data?.b?.ticker;
+        if (Math.abs(t.spread_pt) < 1) return 'Par andou em linha';
+        return t.spread_pt > 0 ? `${a} outperform` : `${b} outperform`;
+      },
+    }));
+  });
+</script>
+</body>
+</html>

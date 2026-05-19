@@ -332,4 +332,12 @@
         return Number(x).toFixed(1) + (suffix || '');
       },
       fmtPct(x) { return (x === null || x === undefined) ? '—' : (x*100).toFixed(1) + '%'; },
-      colorPct(x) {
+      colorPct(x) {
+        if (x === null || x === undefined) return '';
+        return x > 0 ? 'text-emerald-400' : (x < 0 ? 'text-red-400' : '');
+      },
+    }));
+  });
+</script>
+</body>
+</html>

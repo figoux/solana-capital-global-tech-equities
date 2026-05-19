@@ -352,4 +352,16 @@
       },
       shortName(name) {
         if (!name) return '';
-        const cleaned = name.replace(/\s+(Group|Holdings|Inc|Corp|Corporation|Ltd|Limited|ADR|Class\s+[A-C]|Co)
+        const cleaned = name.replace(/\s+(Group|Holdings|Inc|Corp|Corporation|Ltd|Limited|ADR|Class\s+[A-C]|Co)\.?$/gi, '').trim();
+        return cleaned.length > 18 ? cleaned.slice(0, 15) + '…' : cleaned;
+      },
+      withCo(ticker, name) {
+        if (!ticker) return '';
+        if (this.isNumericTicker(ticker) && name) return `${ticker} (${this.shortName(name)})`;
+        return ticker;
+      },
+    }));
+  });
+</script>
+</body>
+</html>
