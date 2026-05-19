@@ -777,4 +777,19 @@ def set_direction_override(body: DirectionOverrideBody):
         INSERT INTO theme_ticker_exposure (theme_id, ticker, exposure, direction, direction_override, rationale_md, updated_at, source)
         VALUES (?, ?, 0, 'long', ?, ?, CURRENT_TIMESTAMP, 'manual')
         ON CONFLICT(theme_id, ticker) DO UPDATE SET
-          direction_override=excluded.d
+          direction_override=excluded.direction_override,
+          rationale_md=COALESCE(excluded.rationale_md, theme_ticker_exposure.rationale_md),
+          updated_at=CURRENT_TIMESTAMP,
+          source='manual'
+        """,
+        (body.theme_id, body.ticker, body.direction, body.rationale_md),
+    )
+    conn.commit()
+    conn.close()
+    return {"ok": True, "theme_id": body.theme_id, "ticker": body.ticker, "direction": body.direction}
+
+
+# -------------------- Static files --------------------
+
+if (FRONTEND_DIR / "assets").exists():
+    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
