@@ -1,5 +1,9 @@
 # Solana Capital Global Tech Equities
 
+[![CI](https://github.com/figoux/solana-capital-global-tech-equities/actions/workflows/ci.yml/badge.svg)](https://github.com/figoux/solana-capital-global-tech-equities/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+
 A research dashboard for global technology equities, focused on **pair trading**,
 **earnings tracking**, and **thematic exposure analysis**. Designed for an
 equity long/short PM workflow — it answers the questions you ask in the hour
@@ -24,6 +28,16 @@ The application is a single FastAPI process with a server-rendered Alpine.js
 frontend. The ETL pipeline runs locally on a schedule (Windows Task Scheduler
 in our setup), updates a SQLite snapshot, commits it to the repo, and Render
 redeploys with the new data.
+
+---
+
+## Screenshots
+
+| Heatmap (themes × subsectors) | Per-company page |
+|:---:|:---:|
+| ![Heatmap](docs/img/heatmap.png) | ![Company](docs/img/company.png) |
+| **Pair workspace with 12m chart** | **Upcoming earnings feed** |
+| ![Pair](docs/img/pair.png) | ![Earnings](docs/img/earnings.png) |
 
 ---
 

@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke:
+    name: Lint + import smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff
+
+      - name: Lint with ruff (non-blocking)
+        run: ruff check . || echo "ruff exited non-zero — non-blocking for now"
+
+      - name: Compile all Python modules
+        run: |
+          python -m compileall backend/ scripts/ -q
+
+      - name: Smoke import test
+        run: |
+          python -c "from backend.api import server; print('server import ok')"
+          python -c "import backend.etl.universe, backend.etl.exposures_seed, backend.etl.themes_seed, backend.etl.theme_mapping_seed, backend.etl.business_exposures_seed; print('etl seeds import ok')"
+          python -c "import backend.etl.prices_yf, backend.etl.fundamentals_yf, backend.etl.vol_yf, backend.etl.earnings_cal, backend.etl.earnings_history_yf, backend.etl.pairs_compute; print('etl pipelines import ok')"
+
+      - name: API healthcheck
+        run: |
+          uvicorn backend.api.server:app --host 127.0.0.1 --port 8000 &
+          sleep 3
+          curl -sf http://127.0.0.1:8000/health || (echo "healthcheck failed"; exit 1)
+          echo "healthcheck ok"
