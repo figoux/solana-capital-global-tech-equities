@@ -50,22 +50,53 @@ TREASURY_5Y_TICKER = "^FVX"  # CBOE 5-Year Treasury Note Yield
 
 
 def _build_ttm_eps_series(ticker: str) -> pd.Series:
-    """Returns a Series indexed by report_date with rolling 4-quarter trailing EPS."""
+    """Returns a Series indexed by report_date with TTM EPS.
+
+    Uses quarterly_income_stmt when available (precise, last ~5 quarters of TTM).
+    Falls back to annual income_stmt + linear interpolation across fiscal year
+    boundaries to extend the history back ~4-5 years (lower fidelity but covers
+    the longer window needed for 5Y median).
+    """
     try:
         tk = yf.Ticker(ticker)
-        # quarterly_income_stmt returns recent quarters (typically 5-8 columns)
-        df = tk.quarterly_income_stmt
-        if df is None or df.empty or "Diluted EPS" not in df.index:
+
+        # Quarterly path (preferred — gives proper rolling TTM)
+        eps_ttm_quarterly = pd.Series(dtype=float)
+        df_q = tk.quarterly_income_stmt
+        if df_q is not None and not df_q.empty and "Diluted EPS" in df_q.index:
+            eps_q = df_q.loc["Diluted EPS"].dropna()
+            eps_q.index = pd.to_datetime(eps_q.index)
+            eps_q = eps_q.sort_index()
+            eps_ttm_quarterly = eps_q.rolling(window=4, min_periods=4).sum().dropna()
+
+        # Annual path (fallback to extend backward)
+        eps_ttm_annual = pd.Series(dtype=float)
+        df_a = tk.income_stmt
+        if df_a is not None and not df_a.empty and "Diluted EPS" in df_a.index:
+            eps_a = df_a.loc["Diluted EPS"].dropna()
+            eps_a.index = pd.to_datetime(eps_a.index)
+            eps_a = eps_a.sort_index()
+            # Each annual EPS is already TTM-like (full-year EPS reported)
+            eps_ttm_annual = eps_a
+
+        # Combine: prefer quarterly when both exist, use annual to fill earlier dates
+        if eps_ttm_quarterly.empty and eps_ttm_annual.empty:
             return pd.Series(dtype=float)
-        eps_q = df.loc["Diluted EPS"].dropna()
-        eps_q.index = pd.to_datetime(eps_q.index)
-        eps_q = eps_q.sort_index()
-        # Rolling sum of 4 quarters = TTM
-        eps_ttm = eps_q.rolling(window=4, min_periods=4).sum()
-        eps_ttm = eps_ttm.dropna()
-        return eps_ttm
+
+        if eps_ttm_quarterly.empty:
+            return eps_ttm_annual
+
+        if eps_ttm_annual.empty:
+            return eps_ttm_quarterly
+
+        # Drop annual rows that overlap with the quarterly window (quarterly is finer)
+        q_start = eps_ttm_quarterly.index.min()
+        annual_before = eps_ttm_annual[eps_ttm_annual.index < q_start]
+        combined = pd.concat([annual_before, eps_ttm_quarterly]).sort_index()
+        return combined
+
     except Exception as e:
-        print(f"  [warn] {ticker} EPS fetch failed: {e.__class__.__name__}")
+        print(f"  [warn] {ticker} EPS fetch failed: {e.__class__.__name__}: {e}")
         return pd.Series(dtype=float)
 
 
@@ -125,16 +156,23 @@ def process_ticker(cur, ticker: str, treasury_series: pd.Series) -> int:
     spread = SPREADS_BPS.get(ticker, 50)
     fwd_pe_fy1 = _fwd_pe_fy1(cur, ticker)  # snapshot, applies to last row only
 
-    # Build daily EPS_TTM via forward-fill from quarterly report dates
-    full_dates = pd.date_range(
-        start=max(price_series.index.min(), eps_ttm_series.index.min().date()),
-        end=price_series.index.max(),
-        freq="D",
-    ).date
+    # Build daily EPS_TTM with linear interpolation between known report dates.
+    # This smooths the step function across annual and quarterly reports.
+    eps_dates = sorted(eps_ttm_series.index)
+    if len(eps_dates) < 2:
+        return 0
+    start = max(price_series.index.min(), eps_dates[0].date())
+    end = price_series.index.max()
+    full_dates = pd.date_range(start=start, end=end, freq="D").date
     eps_daily = pd.Series(index=full_dates, dtype=float)
+
+    # Anchor known points
     for report_date, eps_val in eps_ttm_series.items():
-        eps_daily.loc[eps_daily.index >= report_date.date()] = eps_val
-    eps_daily = eps_daily.ffill().dropna()
+        d = report_date.date()
+        if d in eps_daily.index:
+            eps_daily.loc[d] = eps_val
+    # Linear interpolate between anchors, then forward-fill at the tail
+    eps_daily = eps_daily.interpolate(method="linear").ffill().dropna()
 
     rows_upserted = 0
     last_date = max(eps_daily.index)

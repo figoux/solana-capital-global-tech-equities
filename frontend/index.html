@@ -184,28 +184,34 @@
           </div>
         </div>
 
-        <!-- 3 summary cards -->
+        <!-- 3 summary cards: current + rolling 1Y + rolling 5Y -->
         <div class="grid grid-cols-3 gap-2 mb-3 text-xs">
           <div class="bg-slate-900 rounded p-2 border border-slate-700">
-            <div class="muted text-[10px] uppercase">Current</div>
+            <div class="muted text-[10px] uppercase flex items-center gap-1">
+              <span class="inline-block w-3 h-0.5 bg-emerald-500"></span> Current
+            </div>
             <div class="text-lg font-bold num"
                  :class="erpColor(erp?.stats?.current_erp_mean)"
                  x-text="erp?.stats?.current_erp_mean !== null ? (erp.stats.current_erp_mean > 0 ? '+' : '') + Number(erp.stats.current_erp_mean).toFixed(2) + '%' : '—'"></div>
-            <div class="text-[10px] muted mt-0.5" x-text="erpVsMedian('current')"></div>
+            <div class="text-[10px] muted mt-0.5">today's MAG6 mean ERP</div>
           </div>
           <div class="bg-slate-900 rounded p-2 border border-slate-700">
-            <div class="muted text-[10px] uppercase">Median 6M</div>
+            <div class="muted text-[10px] uppercase flex items-center gap-1">
+              <span class="inline-block w-3 h-0.5 bg-blue-400"></span> 1Y rolling median
+            </div>
             <div class="text-lg font-bold num"
-                 :class="erpColor(erp?.stats?.median_6m)"
-                 x-text="erp?.stats?.median_6m !== null ? (erp.stats.median_6m > 0 ? '+' : '') + Number(erp.stats.median_6m).toFixed(2) + '%' : '—'"></div>
-            <div class="text-[10px] muted mt-0.5">reference</div>
+                 :class="erpColor(erp?.stats?.median_1y_now)"
+                 x-text="erp?.stats?.median_1y_now !== null ? (erp.stats.median_1y_now > 0 ? '+' : '') + Number(erp.stats.median_1y_now).toFixed(2) + '%' : '—'"></div>
+            <div class="text-[10px] muted mt-0.5" x-text="erpVsRolling('1y')"></div>
           </div>
           <div class="bg-slate-900 rounded p-2 border border-slate-700">
-            <div class="muted text-[10px] uppercase">Median 5Y</div>
+            <div class="muted text-[10px] uppercase flex items-center gap-1">
+              <span class="inline-block w-3 h-0.5 bg-amber-500"></span> 5Y rolling median
+            </div>
             <div class="text-lg font-bold num"
-                 :class="erpColor(erp?.stats?.median_5y)"
-                 x-text="erp?.stats?.median_5y !== null ? (erp.stats.median_5y > 0 ? '+' : '') + Number(erp.stats.median_5y).toFixed(2) + '%' : '—'"></div>
-            <div class="text-[10px] muted mt-0.5" x-text="erpVsMedian('5y')"></div>
+                 :class="erpColor(erp?.stats?.median_5y_now)"
+                 x-text="erp?.stats?.median_5y_now !== null ? (erp.stats.median_5y_now > 0 ? '+' : '') + Number(erp.stats.median_5y_now).toFixed(2) + '%' : '—'"></div>
+            <div class="text-[10px] muted mt-0.5" x-text="erpVsRolling('5y')"></div>
           </div>
         </div>
 
@@ -228,25 +234,7 @@
             <text :x="ERP_W - ERP_PAD_R - 4" :y="erpYOf(0) - 3" text-anchor="end"
                   fill="#94a3b8" font-size="9">0%</text>
 
-            <!-- Median 5Y line -->
-            <template x-if="erp?.stats?.median_5y !== null">
-              <g>
-                <line :x1="ERP_PAD_L" :x2="ERP_W - ERP_PAD_R" :y1="erpYOf(erp.stats.median_5y)" :y2="erpYOf(erp.stats.median_5y)"
-                      stroke="#f59e0b" stroke-width="1" stroke-dasharray="6,4" />
-                <text :x="ERP_W - ERP_PAD_R - 4" :y="erpYOf(erp.stats.median_5y) - 3" text-anchor="end"
-                      fill="#f59e0b" font-size="9" x-text="'5Y med ' + (erp.stats.median_5y > 0 ? '+' : '') + Number(erp.stats.median_5y).toFixed(2) + '%'"></text>
-              </g>
-            </template>
-
-            <!-- Median 6M line -->
-            <template x-if="erp?.stats?.median_6m !== null">
-              <g>
-                <line :x1="ERP_PAD_L" :x2="ERP_W - ERP_PAD_R" :y1="erpYOf(erp.stats.median_6m)" :y2="erpYOf(erp.stats.median_6m)"
-                      stroke="#60a5fa" stroke-width="1" stroke-dasharray="6,4" />
-                <text :x="ERP_W - ERP_PAD_R - 4" :y="erpYOf(erp.stats.median_6m) - 3" text-anchor="end"
-                      fill="#60a5fa" font-size="9" x-text="'6M med ' + (erp.stats.median_6m > 0 ? '+' : '') + Number(erp.stats.median_6m).toFixed(2) + '%'"></text>
-              </g>
-            </template>
+            <!-- (Rolling lines drawn below the main line) -->
 
             <!-- X axis ticks -->
             <template x-for="t in erpXTicks()" :key="t.i">
@@ -258,8 +246,12 @@
               </g>
             </template>
 
-            <!-- Main ERP line -->
-            <polyline :points="erpPath()" fill="none" stroke="#10b981" stroke-width="1.8"/>
+            <!-- Rolling 5Y median (amber, dashed, drawn first so main line stays on top) -->
+            <polyline :points="erpRollingPath('rolling_5y')" fill="none" stroke="#f59e0b" stroke-width="1.6" stroke-dasharray="5,3" stroke-linejoin="round"/>
+            <!-- Rolling 1Y median (blue, dashed) -->
+            <polyline :points="erpRollingPath('rolling_1y')" fill="none" stroke="#60a5fa" stroke-width="1.6" stroke-dasharray="4,3" stroke-linejoin="round"/>
+            <!-- Main ERP MEAN daily (emerald, solid, thicker) -->
+            <polyline :points="erpPath()" fill="none" stroke="#10b981" stroke-width="2" stroke-linejoin="round"/>
 
             <!-- Crosshair -->
             <g x-show="erpHover">
@@ -483,30 +475,36 @@
         if (v === null || v === undefined) return 'muted';
         return v > 0 ? 'text-emerald-400' : (v < 0 ? 'text-red-400' : 'text-slate-300');
       },
-      erpVsMedian(which) {
+      erpVsRolling(which) {
         const cur = this.erp?.stats?.current_erp_mean;
-        const ref = which === '5y' ? this.erp?.stats?.median_5y : this.erp?.stats?.median_6m;
+        const ref = which === '5y' ? this.erp?.stats?.median_5y_now : this.erp?.stats?.median_1y_now;
         if (cur === null || cur === undefined || ref === null || ref === undefined) return '';
         const diff_bp = Math.round((cur - ref) * 100);
-        if (Math.abs(diff_bp) < 5) return 'in line';
-        return (diff_bp > 0 ? '+' : '') + diff_bp + 'bp vs ' + (which === '5y' ? '5Y' : '6M');
+        if (Math.abs(diff_bp) < 5) return 'in line with current';
+        return (diff_bp > 0 ? '+' : '') + diff_bp + 'bp vs current';
       },
       erpVisibleSeries() {
-        if (!this.erp?.history?.dates?.length) return { dates: [], series: [] };
+        if (!this.erp?.history?.dates?.length) return { dates: [], series: [], r1y: [], r5y: [] };
         const all_dates = this.erp.history.dates;
         const all_series = this.erp.history.erp_mean;
+        const r1y = this.erp.history.rolling_1y || [];
+        const r5y = this.erp.history.rolling_5y || [];
         const n_take = Math.min(this.erpWindow, all_dates.length);
         return {
           dates: all_dates.slice(-n_take),
           series: all_series.slice(-n_take),
+          r1y: r1y.slice(-n_take),
+          r5y: r5y.slice(-n_take),
         };
       },
       erpYDomain() {
-        const { series } = this.erpVisibleSeries();
-        const refs = [0];
-        if (this.erp?.stats?.median_5y !== null && this.erp?.stats?.median_5y !== undefined) refs.push(this.erp.stats.median_5y);
-        if (this.erp?.stats?.median_6m !== null && this.erp?.stats?.median_6m !== undefined) refs.push(this.erp.stats.median_6m);
-        const all = [...series.filter(v => v !== null), ...refs];
+        const { series, r1y, r5y } = this.erpVisibleSeries();
+        const all = [
+          0,
+          ...series.filter(v => v !== null),
+          ...r1y.filter(v => v !== null),
+          ...r5y.filter(v => v !== null),
+        ];
         if (!all.length) return [-1, 1];
         const lo = Math.min(...all);
         const hi = Math.max(...all);
@@ -528,6 +526,13 @@
         const { series } = this.erpVisibleSeries();
         const n = series.length;
         return series.map((v, i) => v !== null ? `${this.erpXOf(i, n).toFixed(1)},${this.erpYOf(v).toFixed(1)}` : '').filter(Boolean).join(' ');
+      },
+      erpRollingPath(which) {
+        const { dates, r1y, r5y } = this.erpVisibleSeries();
+        const arr = which === 'rolling_5y' ? r5y : r1y;
+        const n = arr.length;
+        if (!n) return '';
+        return arr.map((v, i) => v !== null ? `${this.erpXOf(i, n).toFixed(1)},${this.erpYOf(v).toFixed(1)}` : '').filter(Boolean).join(' ');
       },
       erpGrid() {
         const [lo, hi] = this.erpYDomain();

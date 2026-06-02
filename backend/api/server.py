@@ -242,34 +242,42 @@ def mag6_erp():
     dates = [h["date"] for h in hist]
     erp_series = [round(h["erp_mean"], 3) for h in hist]
 
-    # 3) Stats
+    # 3) Rolling medians (1Y = 252 trading days, 5Y = 1260)
+    from statistics import median
+
+    def _rolling_median(series: list[float], window: int) -> list[float | None]:
+        out: list[float | None] = []
+        for i in range(len(series)):
+            start = max(0, i - window + 1)
+            chunk = [v for v in series[start:i + 1] if v is not None]
+            if len(chunk) < min(20, window // 4):  # need at least some samples
+                out.append(None)
+            else:
+                out.append(round(median(chunk), 3))
+        return out
+
+    rolling_1y = _rolling_median(erp_series, 252)
+    rolling_5y = _rolling_median(erp_series, 1260)
+
+    # 4) Stats
     stats = {
         "history_days": len(dates),
         "first_date": dates[0] if dates else None,
         "last_date": dates[-1] if dates else None,
         "current_erp_mean": erp_series[-1] if erp_series else None,
-        "median_6m": None,
-        "median_5y": None,
+        "median_1y_now": rolling_1y[-1] if rolling_1y else None,   # last point of 1Y rolling
+        "median_5y_now": rolling_5y[-1] if rolling_5y else None,   # last point of 5Y rolling
     }
-    if erp_series:
-        from statistics import median
-        # 6M window
-        if dates:
-            from datetime import datetime, timedelta as _td
-            last = datetime.fromisoformat(dates[-1]).date()
-            cutoff_6m = (last - _td(days=180)).isoformat()
-            cutoff_5y = (last - _td(days=365 * 5)).isoformat()
-            slice_6m = [v for d, v in zip(dates, erp_series) if d >= cutoff_6m]
-            slice_5y = [v for d, v in zip(dates, erp_series) if d >= cutoff_5y]
-            if slice_6m:
-                stats["median_6m"] = round(median(slice_6m), 3)
-            if slice_5y:
-                stats["median_5y"] = round(median(slice_5y), 3)
 
     conn.close()
     return {
         "current": current,
-        "history": {"dates": dates, "erp_mean": erp_series},
+        "history": {
+            "dates": dates,
+            "erp_mean": erp_series,
+            "rolling_1y": rolling_1y,
+            "rolling_5y": rolling_5y,
+        },
         "stats": stats,
     }
 
