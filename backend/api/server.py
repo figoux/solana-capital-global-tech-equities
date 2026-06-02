@@ -166,6 +166,114 @@ def heatmap():
     return {"subsectors": subs, "subsector_counts": counts, "themes": out_themes}
 
 
+@app.get("/api/mag6-erp")
+def mag6_erp():
+    """Big Tech 6 Equity Risk Premium — current snapshot + historical mean series.
+
+    Returns three sections:
+      - current: latest snapshot per ticker + MEAN row (uses fwd_pe_fy1 when available)
+      - history: dates[] and erp_mean[] (TTM-based equal-weight mean across MAG6)
+      - stats: current_erp_mean, median_6m, median_5y, history_days
+    """
+    conn = _db()
+
+    # 1) Current snapshot per ticker (latest date in the table)
+    rows = conn.execute(
+        """
+        SELECT ticker, pe_ttm, pe_fwd_fy1, earning_yield, treasury_5y,
+               spread_bps, bond_yield, erp, date
+        FROM mag6_erp_history
+        WHERE date = (SELECT MAX(date) FROM mag6_erp_history)
+        ORDER BY ticker
+        """
+    ).fetchall()
+
+    current = []
+    for r in rows:
+        d = dict(r)
+        # Prefer forward P/E for snapshot if available; recompute e_yield + erp on that basis
+        pe_for_snapshot = d.get("pe_fwd_fy1") or d.get("pe_ttm")
+        e_yield_snapshot = (100.0 / pe_for_snapshot) if pe_for_snapshot else None
+        erp_snapshot = (e_yield_snapshot - d["bond_yield"]) if e_yield_snapshot is not None else None
+        current.append({
+            "ticker": d["ticker"],
+            "pe_ttm": d["pe_ttm"],
+            "pe_fwd_fy1": d["pe_fwd_fy1"],
+            "earning_yield": round(e_yield_snapshot, 2) if e_yield_snapshot is not None else None,
+            "treasury_5y": d["treasury_5y"],
+            "spread_bps": d["spread_bps"],
+            "bond_yield": round(d["bond_yield"], 2) if d["bond_yield"] is not None else None,
+            "erp": round(erp_snapshot, 2) if erp_snapshot is not None else None,
+            "date": d["date"],
+        })
+
+    # Add MEAN row (equal-weight across the 6 tickers)
+    valid = [c for c in current if c["erp"] is not None]
+    if valid:
+        mean_pe = sum((c["pe_fwd_fy1"] or c["pe_ttm"]) for c in valid) / len(valid)
+        mean_e_yield = sum(c["earning_yield"] for c in valid) / len(valid)
+        mean_bond_y = sum(c["bond_yield"] for c in valid) / len(valid)
+        mean_spread = sum(c["spread_bps"] for c in valid) / len(valid)
+        mean_erp = mean_e_yield - mean_bond_y
+        current.append({
+            "ticker": "MEAN",
+            "pe_ttm": None,
+            "pe_fwd_fy1": round(mean_pe, 1),
+            "earning_yield": round(mean_e_yield, 2),
+            "treasury_5y": valid[0]["treasury_5y"],
+            "spread_bps": round(mean_spread, 0),
+            "bond_yield": round(mean_bond_y, 2),
+            "erp": round(mean_erp, 2),
+            "date": valid[0]["date"],
+        })
+
+    # 2) Historical mean series (equal-weight across MAG6, TTM-based)
+    hist = conn.execute(
+        """
+        SELECT date, AVG(erp) AS erp_mean, COUNT(*) AS n
+        FROM mag6_erp_history
+        WHERE erp IS NOT NULL
+        GROUP BY date
+        HAVING n >= 4   -- require at least 4 tickers reporting that day
+        ORDER BY date ASC
+        """
+    ).fetchall()
+
+    dates = [h["date"] for h in hist]
+    erp_series = [round(h["erp_mean"], 3) for h in hist]
+
+    # 3) Stats
+    stats = {
+        "history_days": len(dates),
+        "first_date": dates[0] if dates else None,
+        "last_date": dates[-1] if dates else None,
+        "current_erp_mean": erp_series[-1] if erp_series else None,
+        "median_6m": None,
+        "median_5y": None,
+    }
+    if erp_series:
+        from statistics import median
+        # 6M window
+        if dates:
+            from datetime import datetime, timedelta as _td
+            last = datetime.fromisoformat(dates[-1]).date()
+            cutoff_6m = (last - _td(days=180)).isoformat()
+            cutoff_5y = (last - _td(days=365 * 5)).isoformat()
+            slice_6m = [v for d, v in zip(dates, erp_series) if d >= cutoff_6m]
+            slice_5y = [v for d, v in zip(dates, erp_series) if d >= cutoff_5y]
+            if slice_6m:
+                stats["median_6m"] = round(median(slice_6m), 3)
+            if slice_5y:
+                stats["median_5y"] = round(median(slice_5y), 3)
+
+    conn.close()
+    return {
+        "current": current,
+        "history": {"dates": dates, "erp_mean": erp_series},
+        "stats": stats,
+    }
+
+
 @app.get("/api/earnings/week")
 def earnings_week(n: int = 2):
     """Earnings nas próximas N semanas (default 2)."""

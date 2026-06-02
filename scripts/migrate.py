@@ -86,6 +86,26 @@ def main() -> None:
     """)
     cur.execute("CREATE INDEX IF NOT EXISTS idx_eh_ticker_date ON earnings_history(ticker, report_date DESC)")
 
+    # M006 — mag6_erp_history table (daily ERP per Big Tech 6 + treasury + spreads)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS mag6_erp_history (
+          date           TEXT NOT NULL,
+          ticker         TEXT NOT NULL,
+          price          REAL,
+          eps_ttm        REAL,
+          pe_ttm         REAL,
+          pe_fwd_fy1     REAL,
+          earning_yield  REAL,
+          treasury_5y    REAL,
+          spread_bps     INTEGER,
+          bond_yield     REAL,
+          erp            REAL,
+          PRIMARY KEY (date, ticker)
+        )
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_mag6_erp_date ON mag6_erp_history(date DESC)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_mag6_erp_ticker ON mag6_erp_history(ticker, date DESC)")
+
     conn.commit()
     conn.close()
     print("[migrate] done")

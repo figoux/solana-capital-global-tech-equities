@@ -118,6 +118,177 @@
     </p>
   </section>
 
+  <!-- MAG6 Equity Risk Premium -->
+  <section class="mb-8" x-show="erp">
+    <div class="flex items-baseline justify-between mb-3">
+      <h2 class="text-lg font-semibold">Big Tech 6 · Equity Risk Premium</h2>
+      <span class="text-xs muted">
+        ERP = Earnings Yield − Bond Yield (Treasury 5Y + per-ticker credit spread).
+        Negative = equity rich vs debt.
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- LEFT: current snapshot table -->
+      <div class="bg-slate-800 border border-slate-700 rounded p-4">
+        <div class="flex items-baseline justify-between mb-3">
+          <h3 class="text-sm font-semibold muted uppercase">Current snapshot</h3>
+          <span class="text-xs muted" x-text="erp?.current?.[0]?.date ? ('as of ' + erp.current[0].date) : ''"></span>
+        </div>
+        <table class="w-full text-xs num">
+          <thead>
+            <tr class="muted border-b border-slate-700">
+              <th class="text-left py-1.5">Ticker</th>
+              <th class="text-right py-1.5">Fwd P/E</th>
+              <th class="text-right py-1.5">E.Yield</th>
+              <th class="text-right py-1.5" title="basis points">Spread</th>
+              <th class="text-right py-1.5">Bond Y</th>
+              <th class="text-right py-1.5">ERP</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="r in (erp?.current || [])" :key="r.ticker">
+              <tr :class="r.ticker === 'MEAN' ? 'border-t-2 border-slate-600 bg-slate-900 font-semibold' : 'border-t border-slate-800 hover:bg-slate-900'">
+                <td class="py-1.5">
+                  <a x-show="r.ticker !== 'MEAN'" :href="'/company/' + r.ticker" class="font-semibold hover:text-emerald-400" x-text="r.ticker"></a>
+                  <span x-show="r.ticker === 'MEAN'" class="uppercase tracking-wide" x-text="r.ticker"></span>
+                </td>
+                <td class="text-right py-1.5" x-text="r.pe_fwd_fy1 ? Number(r.pe_fwd_fy1).toFixed(1) + 'x' : (r.pe_ttm ? Number(r.pe_ttm).toFixed(1) + 'x (TTM)' : '—')"></td>
+                <td class="text-right py-1.5" x-text="r.earning_yield !== null ? Number(r.earning_yield).toFixed(2) + '%' : '—'"></td>
+                <td class="text-right py-1.5 muted text-[11px]" x-text="r.spread_bps !== null ? '+' + Math.round(r.spread_bps) + 'bp' : '—'"></td>
+                <td class="text-right py-1.5" x-text="r.bond_yield !== null ? Number(r.bond_yield).toFixed(2) + '%' : '—'"></td>
+                <td class="text-right py-1.5 font-semibold"
+                    :class="erpColor(r.erp)"
+                    x-text="r.erp !== null ? (r.erp > 0 ? '+' : '') + Number(r.erp).toFixed(2) + '%' : '—'"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+        <p class="text-[11px] muted mt-3">
+          Snapshot uses Fwd P/E FY1 consensus. Spread is hardcoded by rating, reviewed quarterly.
+          Click ticker to drill into company.
+        </p>
+      </div>
+
+      <!-- RIGHT: historical chart -->
+      <div class="bg-slate-800 border border-slate-700 rounded p-4">
+        <div class="flex items-baseline justify-between mb-3">
+          <h3 class="text-sm font-semibold muted uppercase">Historical mean ERP (TTM-based)</h3>
+          <div class="flex gap-1 text-xs">
+            <template x-for="w in [365, 730, 1825]" :key="w">
+              <button @click="erpWindow=w"
+                      :class="erpWindow===w ? 'bg-emerald-600' : 'bg-slate-900 hover:bg-slate-700'"
+                      class="px-2 py-0.5 rounded muted"
+                      x-text="w===365 ? '1Y' : (w===730 ? '2Y' : '5Y')"></button>
+            </template>
+          </div>
+        </div>
+
+        <!-- 3 summary cards -->
+        <div class="grid grid-cols-3 gap-2 mb-3 text-xs">
+          <div class="bg-slate-900 rounded p-2 border border-slate-700">
+            <div class="muted text-[10px] uppercase">Current</div>
+            <div class="text-lg font-bold num"
+                 :class="erpColor(erp?.stats?.current_erp_mean)"
+                 x-text="erp?.stats?.current_erp_mean !== null ? (erp.stats.current_erp_mean > 0 ? '+' : '') + Number(erp.stats.current_erp_mean).toFixed(2) + '%' : '—'"></div>
+            <div class="text-[10px] muted mt-0.5" x-text="erpVsMedian('current')"></div>
+          </div>
+          <div class="bg-slate-900 rounded p-2 border border-slate-700">
+            <div class="muted text-[10px] uppercase">Median 6M</div>
+            <div class="text-lg font-bold num"
+                 :class="erpColor(erp?.stats?.median_6m)"
+                 x-text="erp?.stats?.median_6m !== null ? (erp.stats.median_6m > 0 ? '+' : '') + Number(erp.stats.median_6m).toFixed(2) + '%' : '—'"></div>
+            <div class="text-[10px] muted mt-0.5">reference</div>
+          </div>
+          <div class="bg-slate-900 rounded p-2 border border-slate-700">
+            <div class="muted text-[10px] uppercase">Median 5Y</div>
+            <div class="text-lg font-bold num"
+                 :class="erpColor(erp?.stats?.median_5y)"
+                 x-text="erp?.stats?.median_5y !== null ? (erp.stats.median_5y > 0 ? '+' : '') + Number(erp.stats.median_5y).toFixed(2) + '%' : '—'"></div>
+            <div class="text-[10px] muted mt-0.5" x-text="erpVsMedian('5y')"></div>
+          </div>
+        </div>
+
+        <!-- SVG chart -->
+        <div class="relative" @mouseleave="erpHover = null">
+          <svg :viewBox="'0 0 ' + ERP_W + ' ' + ERP_H" class="w-full"
+               @mousemove="onErpMove($event)" style="cursor: crosshair;">
+            <!-- Grid horizontal -->
+            <template x-for="g in erpGrid()" :key="g.y">
+              <g>
+                <line :x1="ERP_PAD_L" :x2="ERP_W - ERP_PAD_R" :y1="g.y" :y2="g.y"
+                      stroke="#1e293b" stroke-width="1" stroke-dasharray="2,3" />
+                <text :x="ERP_PAD_L - 6" :y="g.y + 3" text-anchor="end"
+                      fill="#64748b" font-size="10" x-text="g.label"></text>
+              </g>
+            </template>
+            <!-- Zero line (highlighted) -->
+            <line :x1="ERP_PAD_L" :x2="ERP_W - ERP_PAD_R" :y1="erpYOf(0)" :y2="erpYOf(0)"
+                  stroke="#475569" stroke-width="1.5" />
+            <text :x="ERP_W - ERP_PAD_R - 4" :y="erpYOf(0) - 3" text-anchor="end"
+                  fill="#94a3b8" font-size="9">0%</text>
+
+            <!-- Median 5Y line -->
+            <template x-if="erp?.stats?.median_5y !== null">
+              <g>
+                <line :x1="ERP_PAD_L" :x2="ERP_W - ERP_PAD_R" :y1="erpYOf(erp.stats.median_5y)" :y2="erpYOf(erp.stats.median_5y)"
+                      stroke="#f59e0b" stroke-width="1" stroke-dasharray="6,4" />
+                <text :x="ERP_W - ERP_PAD_R - 4" :y="erpYOf(erp.stats.median_5y) - 3" text-anchor="end"
+                      fill="#f59e0b" font-size="9" x-text="'5Y med ' + (erp.stats.median_5y > 0 ? '+' : '') + Number(erp.stats.median_5y).toFixed(2) + '%'"></text>
+              </g>
+            </template>
+
+            <!-- Median 6M line -->
+            <template x-if="erp?.stats?.median_6m !== null">
+              <g>
+                <line :x1="ERP_PAD_L" :x2="ERP_W - ERP_PAD_R" :y1="erpYOf(erp.stats.median_6m)" :y2="erpYOf(erp.stats.median_6m)"
+                      stroke="#60a5fa" stroke-width="1" stroke-dasharray="6,4" />
+                <text :x="ERP_W - ERP_PAD_R - 4" :y="erpYOf(erp.stats.median_6m) - 3" text-anchor="end"
+                      fill="#60a5fa" font-size="9" x-text="'6M med ' + (erp.stats.median_6m > 0 ? '+' : '') + Number(erp.stats.median_6m).toFixed(2) + '%'"></text>
+              </g>
+            </template>
+
+            <!-- X axis ticks -->
+            <template x-for="t in erpXTicks()" :key="t.i">
+              <g>
+                <line :x1="t.x" :x2="t.x" :y1="ERP_H - ERP_PAD_B" :y2="ERP_H - ERP_PAD_B + 4"
+                      stroke="#475569" />
+                <text :x="t.x" :y="ERP_H - ERP_PAD_B + 16" text-anchor="middle"
+                      fill="#64748b" font-size="10" x-text="t.label"></text>
+              </g>
+            </template>
+
+            <!-- Main ERP line -->
+            <polyline :points="erpPath()" fill="none" stroke="#10b981" stroke-width="1.8"/>
+
+            <!-- Crosshair -->
+            <g x-show="erpHover">
+              <line :x1="erpHover?.x" :x2="erpHover?.x" :y1="ERP_PAD_T" :y2="ERP_H - ERP_PAD_B"
+                    stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3" />
+              <circle :cx="erpHover?.x" :cy="erpHover?.y" r="3.5" fill="#10b981" stroke="#0f172a" stroke-width="1.5"/>
+            </g>
+          </svg>
+
+          <!-- Tooltip -->
+          <div x-show="erpHover" x-cloak
+               class="absolute bg-slate-900/95 border border-slate-600 rounded px-2 py-1.5 text-xs pointer-events-none num shadow-lg"
+               :style="'left:' + erpTooltipLeft() + 'px; top: 8px;'">
+            <div class="muted text-[10px]" x-text="erpHover?.date"></div>
+            <div class="font-semibold mt-0.5"
+                 :class="erpColor(erpHover?.erp)"
+                 x-text="erpHover?.erp !== undefined ? (erpHover.erp > 0 ? '+' : '') + erpHover.erp.toFixed(2) + '%' : ''"></div>
+          </div>
+        </div>
+
+        <p class="text-[11px] muted mt-3">
+          Historical series uses TTM P/E for consistency
+          (yfinance does not expose historical forward consensus).
+          Available history: <span x-text="erp?.stats?.history_days"></span> days.
+        </p>
+      </div>
+    </div>
+  </section>
+
   <!-- Earnings week -->
   <section class="mb-8">
     <div class="flex items-center justify-between mb-3">
@@ -193,9 +364,21 @@
       focalData: null,
       focalScoreMap: {},
 
+      // ---- MAG6 ERP state ----
+      erp: null,
+      erpWindow: 1825,  // 5Y default
+      erpHover: null,
+      ERP_W: 720,
+      ERP_H: 240,
+      ERP_PAD_T: 12,
+      ERP_PAD_B: 26,
+      ERP_PAD_L: 40,
+      ERP_PAD_R: 12,
+
       async load() {
         await this.loadHeatmap();
         await this.loadEarnings();
+        await this.loadErp();
       },
       async loadFocal() {
         const t = (this.focalTicker || '').trim().toUpperCase();
@@ -289,6 +472,119 @@
         if (this.isNumericTicker(ticker) && name) return `${ticker} (${this.shortName(name)})`;
         return ticker;
       },
+      // ---- ERP loader and chart helpers ----
+      async loadErp() {
+        try {
+          const r = await fetch('/api/mag6-erp');
+          this.erp = r.ok ? await r.json() : null;
+        } catch (e) { this.erp = null; }
+      },
+      erpColor(v) {
+        if (v === null || v === undefined) return 'muted';
+        return v > 0 ? 'text-emerald-400' : (v < 0 ? 'text-red-400' : 'text-slate-300');
+      },
+      erpVsMedian(which) {
+        const cur = this.erp?.stats?.current_erp_mean;
+        const ref = which === '5y' ? this.erp?.stats?.median_5y : this.erp?.stats?.median_6m;
+        if (cur === null || cur === undefined || ref === null || ref === undefined) return '';
+        const diff_bp = Math.round((cur - ref) * 100);
+        if (Math.abs(diff_bp) < 5) return 'in line';
+        return (diff_bp > 0 ? '+' : '') + diff_bp + 'bp vs ' + (which === '5y' ? '5Y' : '6M');
+      },
+      erpVisibleSeries() {
+        if (!this.erp?.history?.dates?.length) return { dates: [], series: [] };
+        const all_dates = this.erp.history.dates;
+        const all_series = this.erp.history.erp_mean;
+        const n_take = Math.min(this.erpWindow, all_dates.length);
+        return {
+          dates: all_dates.slice(-n_take),
+          series: all_series.slice(-n_take),
+        };
+      },
+      erpYDomain() {
+        const { series } = this.erpVisibleSeries();
+        const refs = [0];
+        if (this.erp?.stats?.median_5y !== null && this.erp?.stats?.median_5y !== undefined) refs.push(this.erp.stats.median_5y);
+        if (this.erp?.stats?.median_6m !== null && this.erp?.stats?.median_6m !== undefined) refs.push(this.erp.stats.median_6m);
+        const all = [...series.filter(v => v !== null), ...refs];
+        if (!all.length) return [-1, 1];
+        const lo = Math.min(...all);
+        const hi = Math.max(...all);
+        const pad = Math.max(0.3, (hi - lo) * 0.15);
+        return [Math.floor(lo - pad), Math.ceil(hi + pad)];
+      },
+      erpYOf(val) {
+        const [lo, hi] = this.erpYDomain();
+        const innerH = this.ERP_H - this.ERP_PAD_T - this.ERP_PAD_B;
+        const pct = (val - lo) / (hi - lo || 1);
+        return this.ERP_PAD_T + innerH * (1 - pct);
+      },
+      erpXOf(i, n) {
+        const innerW = this.ERP_W - this.ERP_PAD_L - this.ERP_PAD_R;
+        if (n <= 1) return this.ERP_PAD_L;
+        return this.ERP_PAD_L + (innerW * i) / (n - 1);
+      },
+      erpPath() {
+        const { series } = this.erpVisibleSeries();
+        const n = series.length;
+        return series.map((v, i) => v !== null ? `${this.erpXOf(i, n).toFixed(1)},${this.erpYOf(v).toFixed(1)}` : '').filter(Boolean).join(' ');
+      },
+      erpGrid() {
+        const [lo, hi] = this.erpYDomain();
+        const range = hi - lo;
+        const step = range > 8 ? 2 : (range > 4 ? 1 : 0.5);
+        const start = Math.ceil(lo / step) * step;
+        const out = [];
+        for (let v = start; v <= hi; v += step) {
+          out.push({ y: this.erpYOf(v), label: (v > 0 ? '+' : '') + v.toFixed(1) + '%' });
+        }
+        return out;
+      },
+      erpXTicks() {
+        const { dates } = this.erpVisibleSeries();
+        const n = dates.length;
+        if (!n) return [];
+        const nTicks = 5;
+        const ticks = [];
+        const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        for (let i = 0; i < nTicks; i++) {
+          const idx = Math.round((n - 1) * i / (nTicks - 1));
+          const d = dates[idx];
+          if (!d) continue;
+          const [y, m] = d.split('-');
+          ticks.push({ i: idx, x: this.erpXOf(idx, n), label: monthNames[parseInt(m)-1] + " '" + y.slice(2) });
+        }
+        return ticks;
+      },
+      onErpMove(ev) {
+        const { dates, series } = this.erpVisibleSeries();
+        if (!dates.length) return;
+        const svg = ev.currentTarget;
+        const rect = svg.getBoundingClientRect();
+        const xView = (ev.clientX - rect.left) / rect.width * this.ERP_W;
+        const innerW = this.ERP_W - this.ERP_PAD_L - this.ERP_PAD_R;
+        const n = dates.length;
+        let idx = Math.round((xView - this.ERP_PAD_L) / innerW * (n - 1));
+        idx = Math.max(0, Math.min(n - 1, idx));
+        const val = series[idx];
+        if (val === null || val === undefined) return;
+        this.erpHover = {
+          idx,
+          x: this.erpXOf(idx, n),
+          y: this.erpYOf(val),
+          date: dates[idx],
+          erp: val,
+          pxPct: this.erpXOf(idx, n) / this.ERP_W,
+        };
+      },
+      erpTooltipLeft() {
+        if (!this.erpHover) return 0;
+        const w = (document.querySelector('section [x-data]')?.querySelector('svg')?.clientWidth) || 720;
+        let leftPx = (this.erpHover.pxPct * w) + 10;
+        if (this.erpHover.pxPct > 0.7) leftPx = (this.erpHover.pxPct * w) - 90;
+        return Math.max(8, leftPx);
+      },
+
       goTicker() {
         const t = this.tickerQuery.trim().toUpperCase();
         if (t) window.location.href = '/company/' + t;
