@@ -41,6 +41,7 @@ BUCKETS = [
     ("robotics_humanoid",     "Robotics — Humanoid",    "Bipedal/quadruped general-purpose robots",           "Frontier",      135),
     ("autonomous_vehicles",   "Autonomous Vehicles",    "AV stack, robotaxi, trucking AV, EV SDV",            "Frontier",      140),
     ("crypto_stablecoins",    "Crypto & Stablecoins",   "Stablecoin infra, exchanges, on-chain rails",        "Frontier",      145),
+    ("space_infra",           "Space Infra",            "Launch, satellites, LEO connectivity (Starlink)",    "Frontier",      148),
     # Other (1)
     ("other",                 "Other / Residual",       "Catch-all residual (services, legacy, etc)",         "Other",         200),
 ]

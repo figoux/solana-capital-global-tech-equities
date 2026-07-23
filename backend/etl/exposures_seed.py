@@ -40,7 +40,7 @@ EXPOSURES: dict[str, list[tuple[str, int]]] = {
     "GFS":        [("semis_foundry", 100)],
     "COHR":       [("semis_networking", 80), ("semis_general_compute", 15), ("semis_ai_compute", 5)],
     "UMC":        [("semis_foundry", 100)],
-    "000660.KS":  [("semis_memory", 100)],
+    "SKHY":       [("semis_memory", 100)],  # SK Hynix ADR (canônico; renomeado de 000660.KS)
     "RMBS":       [("semis_memory", 70), ("semis_general_compute", 30)],
     "SNDK":       [("semis_memory", 100)],  # pure NAND (spun off from WDC Feb-2025)
     "WDC":        [("semis_memory", 100)],  # HDDs post-spinoff; groups with memory cycle
@@ -166,6 +166,10 @@ EXPOSURES: dict[str, list[tuple[str, int]]] = {
     "ZBRA":       [("robotics_industrial", 100)],
     "TRMB":       [("robotics_industrial", 50), ("autonomous_vehicles", 30), ("other", 20)],
     "AUR":        [("autonomous_vehicles", 100)],
+    "TSLA":       [("autonomous_vehicles", 55), ("oem_consumer", 20), ("robotics_humanoid", 10), ("other", 15)],  # EV/FSD + Optimus + energia em other
+
+    # ============ Space ============
+    "SPCX":       [("space_infra", 90), ("other", 10)],  # launch + Starlink
     "IRBT":       [("robotics_industrial", 100)],  # inactive
     "UNITREE_PVT":[("robotics_humanoid", 70), ("robotics_industrial", 30)],
     "MINIMAX_PVT":[("software_ai_platform", 100)],
