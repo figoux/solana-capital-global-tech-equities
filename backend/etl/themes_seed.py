@@ -20,6 +20,7 @@ DB_PATH = ROOT / "backend" / "db" / "dashboard.db"
 SUBSECTORS = [
     "Semis", "SaaS", "Internet", "OEMs", "WFEs", "Cloud/Data",
     "Cybersecurity", "Financial Services", "Networking", "Robotics",
+    "Space",  # added 2026-07-23 (SPCX)
 ]
 
 # (theme_id, name, short_desc, category, sort_order)

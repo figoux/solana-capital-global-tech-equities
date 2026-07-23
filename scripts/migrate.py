@@ -106,6 +106,22 @@ def main() -> None:
     cur.execute("CREATE INDEX IF NOT EXISTS idx_mag6_erp_date ON mag6_erp_history(date DESC)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_mag6_erp_ticker ON mag6_erp_history(ticker, date DESC)")
 
+    # M007 — adr_premium table (prêmio histórico ADR vs ação local)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS adr_premium (
+          pair_id          TEXT NOT NULL,     -- 'SKHY', 'TSM'
+          date             TEXT NOT NULL,     -- YYYY-MM-DD
+          adr_close        REAL,              -- close do ADR na moeda do ADR (USD)
+          local_close      REAL,              -- close da ação local na moeda local
+          fx               REAL,              -- FX local-per-USD usado na conversão
+          local_in_adr_ccy REAL,              -- local convertido p/ moeda do ADR, ajustado pelo ratio
+          ratio            REAL,              -- ações locais por 1 ADR
+          premium_pct      REAL,              -- (adr / local_in_adr_ccy - 1) * 100
+          PRIMARY KEY (pair_id, date)
+        )
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_adr_premium_date ON adr_premium(pair_id, date DESC)")
+
     conn.commit()
     conn.close()
     print("[migrate] done")

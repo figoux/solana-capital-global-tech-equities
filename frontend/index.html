@@ -281,6 +281,114 @@
     </div>
   </section>
 
+  <!-- ADR Premium vs local -->
+  <section class="mb-8">
+    <div class="flex items-baseline justify-between mb-3">
+      <h2 class="text-lg font-semibold">ADR Premium vs Local Share</h2>
+      <div class="flex items-center gap-3">
+        <span class="text-xs muted">
+          Premium = ADR ÷ (local ÷ FX ÷ ratio) − 1. Positive = ADR rich vs local.
+        </span>
+        <div class="flex gap-1 text-xs">
+          <template x-for="w in [90, 365, 1825]" :key="w">
+            <button @click="premWindow=w"
+                    :class="premWindow===w ? 'bg-emerald-600' : 'bg-slate-900 hover:bg-slate-700'"
+                    class="px-2 py-0.5 rounded muted"
+                    x-text="w===90 ? '3M' : (w===365 ? '1Y' : '5Y')"></button>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <template x-for="pid in ['SKHY', 'TSM']" :key="pid">
+        <div class="bg-slate-800 border border-slate-700 rounded p-4">
+          <div class="flex items-baseline justify-between mb-3">
+            <h3 class="text-sm font-semibold muted uppercase">
+              <span x-text="prem[pid]?.meta?.name || pid"></span>
+              <span class="normal-case font-normal">
+                · <a :href="'/company/' + (prem[pid]?.meta?.adr || pid)" class="hover:text-emerald-400" x-text="prem[pid]?.meta?.adr"></a>
+                vs <span x-text="prem[pid]?.meta?.local"></span>
+              </span>
+            </h3>
+            <span class="text-xs muted"
+                  x-text="prem[pid]?.stats?.ratio ? ('ratio ' + prem[pid].stats.ratio + ':1') : ''"></span>
+          </div>
+
+          <template x-if="prem[pid]?.history?.dates?.length">
+            <div>
+              <!-- summary cards -->
+              <div class="grid grid-cols-3 gap-2 mb-3 text-xs">
+                <div class="bg-slate-900 rounded p-2 border border-slate-700">
+                  <div class="muted text-[10px] uppercase flex items-center gap-1">
+                    <span class="inline-block w-3 h-0.5 bg-emerald-500"></span> Current
+                  </div>
+                  <div class="text-lg font-bold num" :class="premColor(prem[pid]?.stats?.current)"
+                       x-text="fmtPrem(prem[pid]?.stats?.current)"></div>
+                  <div class="text-[10px] muted mt-0.5" x-text="'as of ' + (prem[pid]?.stats?.last_date || '—')"></div>
+                </div>
+                <div class="bg-slate-900 rounded p-2 border border-slate-700">
+                  <div class="muted text-[10px] uppercase flex items-center gap-1">
+                    <span class="inline-block w-3 h-0.5 bg-blue-400"></span> 1Y rolling avg
+                  </div>
+                  <div class="text-lg font-bold num" :class="premColor(prem[pid]?.stats?.avg_1y_now)"
+                       x-text="fmtPrem(prem[pid]?.stats?.avg_1y_now)"></div>
+                  <div class="text-[10px] muted mt-0.5" x-text="premVsAvg(pid, 'avg_1y_now')"></div>
+                </div>
+                <div class="bg-slate-900 rounded p-2 border border-slate-700">
+                  <div class="muted text-[10px] uppercase">Range (full)</div>
+                  <div class="text-sm font-bold num mt-1">
+                    <span class="text-red-400" x-text="fmtPrem(prem[pid]?.stats?.min)"></span>
+                    <span class="muted">→</span>
+                    <span class="text-emerald-400" x-text="fmtPrem(prem[pid]?.stats?.max)"></span>
+                  </div>
+                  <div class="text-[10px] muted mt-0.5" x-text="(prem[pid]?.stats?.history_days || 0) + ' trading days'"></div>
+                </div>
+              </div>
+
+              <!-- SVG chart (viewBox estático: :viewBox dinâmico vira 'viewbox' e é ignorado;
+                   grid/ticks via x-html: <template x-for> dentro de <svg> não renderiza) -->
+              <div class="relative" @mouseleave="premHover[pid] = null">
+                <svg viewBox="0 0 720 220" class="w-full"
+                     @mousemove="onPremMove($event, pid)" style="cursor: crosshair;">
+                  <g x-html="premGridSvg(pid)"></g>
+                  <line :x1="PREM_PAD_L" :x2="PREM_W - PREM_PAD_R" :y1="premYOf(pid, 0)" :y2="premYOf(pid, 0)"
+                        stroke="#475569" stroke-width="1.5" />
+                  <g x-html="premXTicksSvg(pid)"></g>
+                  <polyline :points="premPath(pid, 'rolling_5y')" fill="none" stroke="#f59e0b" stroke-width="1.6" stroke-dasharray="5,3" stroke-linejoin="round"/>
+                  <polyline :points="premPath(pid, 'rolling_1y')" fill="none" stroke="#60a5fa" stroke-width="1.6" stroke-dasharray="4,3" stroke-linejoin="round"/>
+                  <polyline :points="premPath(pid, 'premium')" fill="none" stroke="#10b981" stroke-width="2" stroke-linejoin="round"/>
+                  <g x-show="premHover[pid]">
+                    <line :x1="premHover[pid]?.x" :x2="premHover[pid]?.x" :y1="PREM_PAD_T" :y2="PREM_H - PREM_PAD_B"
+                          stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3" />
+                    <circle :cx="premHover[pid]?.x" :cy="premHover[pid]?.y" r="3.5" fill="#10b981" stroke="#0f172a" stroke-width="1.5"/>
+                  </g>
+                </svg>
+                <div x-show="premHover[pid]" x-cloak
+                     class="absolute bg-slate-900/95 border border-slate-600 rounded px-2 py-1.5 text-xs pointer-events-none num shadow-lg"
+                     :style="'left:' + premTooltipLeft(pid) + 'px; top: 8px;'">
+                  <div class="muted text-[10px]" x-text="premHover[pid]?.date"></div>
+                  <div class="font-semibold mt-0.5" :class="premColor(premHover[pid]?.v)"
+                       x-text="fmtPrem(premHover[pid]?.v)"></div>
+                </div>
+              </div>
+
+              <p class="text-[11px] muted mt-3">
+                <span x-text="prem[pid]?.meta?.adr"></span> (USD) vs
+                <span x-text="prem[pid]?.meta?.local"></span> via
+                <span x-text="prem[pid]?.meta?.fx"></span>.
+                <span x-show="pid==='SKHY'">Série desde o IPO do ADR (10-Jul-2026) — histórico curto por enquanto.</span>
+              </p>
+            </div>
+          </template>
+          <p x-show="!prem[pid]?.history?.dates?.length" class="muted text-sm">
+            Sem dados — rode <code class="text-xs">python -m backend.etl.adr_premium</code>.
+          </p>
+        </div>
+      </template>
+    </div>
+  </section>
+
   <!-- Earnings week -->
   <section class="mb-8">
     <div class="flex items-center justify-between mb-3">
@@ -367,10 +475,22 @@
       ERP_PAD_L: 40,
       ERP_PAD_R: 12,
 
+      // ---- ADR premium state ----
+      prem: { SKHY: null, TSM: null },
+      premWindow: 365,
+      premHover: { SKHY: null, TSM: null },
+      PREM_W: 720,
+      PREM_H: 220,
+      PREM_PAD_T: 12,
+      PREM_PAD_B: 26,
+      PREM_PAD_L: 44,
+      PREM_PAD_R: 12,
+
       async load() {
         await this.loadHeatmap();
         await this.loadEarnings();
         await this.loadErp();
+        await this.loadPremiums();
       },
       async loadFocal() {
         const t = (this.focalTicker || '').trim().toUpperCase();
@@ -588,6 +708,134 @@
         let leftPx = (this.erpHover.pxPct * w) + 10;
         if (this.erpHover.pxPct > 0.7) leftPx = (this.erpHover.pxPct * w) - 90;
         return Math.max(8, leftPx);
+      },
+
+      // ---- ADR premium loader and chart helpers ----
+      async loadPremiums() {
+        for (const pid of ['SKHY', 'TSM']) {
+          try {
+            const r = await fetch('/api/adr-premium/' + pid);
+            this.prem[pid] = r.ok ? await r.json() : null;
+          } catch (e) { this.prem[pid] = null; }
+        }
+      },
+      premColor(v) {
+        if (v === null || v === undefined) return 'muted';
+        return v > 0 ? 'text-emerald-400' : (v < 0 ? 'text-red-400' : 'text-slate-300');
+      },
+      fmtPrem(v) {
+        if (v === null || v === undefined) return '—';
+        return (v > 0 ? '+' : '') + Number(v).toFixed(2) + '%';
+      },
+      premVsAvg(pid, key) {
+        const cur = this.prem[pid]?.stats?.current;
+        const ref = this.prem[pid]?.stats?.[key];
+        if (cur === null || cur === undefined || ref === null || ref === undefined) return 'insufficient history';
+        const bp = Math.round((cur - ref) * 100);
+        if (Math.abs(bp) < 5) return 'in line with current';
+        return 'current is ' + (bp > 0 ? '+' : '') + bp + 'bp vs avg';
+      },
+      premVisible(pid) {
+        const h = this.prem[pid]?.history;
+        if (!h?.dates?.length) return { dates: [], premium: [], rolling_1y: [], rolling_5y: [] };
+        const n = Math.min(this.premWindow, h.dates.length);
+        return {
+          dates: h.dates.slice(-n),
+          premium: h.premium.slice(-n),
+          rolling_1y: (h.rolling_1y || []).slice(-n),
+          rolling_5y: (h.rolling_5y || []).slice(-n),
+        };
+      },
+      premYDomain(pid) {
+        const { premium, rolling_1y, rolling_5y } = this.premVisible(pid);
+        const all = [0,
+          ...premium.filter(v => v !== null),
+          ...rolling_1y.filter(v => v !== null),
+          ...rolling_5y.filter(v => v !== null)];
+        if (all.length < 2) return [-1, 1];
+        const lo = Math.min(...all), hi = Math.max(...all);
+        const pad = Math.max(0.2, (hi - lo) * 0.15);
+        return [lo - pad, hi + pad];
+      },
+      premYOf(pid, val) {
+        const [lo, hi] = this.premYDomain(pid);
+        const innerH = this.PREM_H - this.PREM_PAD_T - this.PREM_PAD_B;
+        return this.PREM_PAD_T + innerH * (1 - (val - lo) / (hi - lo || 1));
+      },
+      premXOf(i, n) {
+        const innerW = this.PREM_W - this.PREM_PAD_L - this.PREM_PAD_R;
+        if (n <= 1) return this.PREM_PAD_L + innerW / 2;
+        return this.PREM_PAD_L + (innerW * i) / (n - 1);
+      },
+      premPath(pid, key) {
+        const vis = this.premVisible(pid);
+        const arr = vis[key] || [];
+        const n = arr.length;
+        if (!n) return '';
+        return arr.map((v, i) => v !== null ? `${this.premXOf(i, n).toFixed(1)},${this.premYOf(pid, v).toFixed(1)}` : '').filter(Boolean).join(' ');
+      },
+      premGridSvg(pid) {
+        const [lo, hi] = this.premYDomain(pid);
+        const range = hi - lo;
+        const step = range > 20 ? 5 : (range > 8 ? 2 : (range > 4 ? 1 : (range > 1.6 ? 0.5 : 0.2)));
+        const start = Math.ceil(lo / step) * step;
+        let out = '';
+        for (let v = start; v <= hi; v += step) {
+          const y = this.premYOf(pid, v).toFixed(1);
+          const label = (v > 0 ? '+' : '') + v.toFixed(1) + '%';
+          out += `<line x1="${this.PREM_PAD_L}" x2="${this.PREM_W - this.PREM_PAD_R}" y1="${y}" y2="${y}" stroke="#334155" stroke-width="1" stroke-dasharray="2,3" opacity="0.5"/>`;
+          out += `<text x="${this.PREM_PAD_L - 6}" y="${(+y + 3).toFixed(1)}" text-anchor="end" fill="#64748b" font-size="10">${label}</text>`;
+        }
+        return out;
+      },
+      premXTicksSvg(pid) {
+        const { dates } = this.premVisible(pid);
+        const n = dates.length;
+        if (!n) return '';
+        const nTicks = Math.min(5, n);
+        const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const y0 = this.PREM_H - this.PREM_PAD_B;
+        let out = '';
+        const seen = new Set();
+        for (let i = 0; i < nTicks; i++) {
+          const idx = nTicks === 1 ? 0 : Math.round((n - 1) * i / (nTicks - 1));
+          const d = dates[idx];
+          if (!d || seen.has(idx)) continue;
+          seen.add(idx);
+          const [y, m, day] = d.split('-');
+          const label = n <= 90
+            ? (parseInt(day) + ' ' + monthNames[parseInt(m)-1])
+            : (monthNames[parseInt(m)-1] + " '" + y.slice(2));
+          const x = this.premXOf(idx, n).toFixed(1);
+          out += `<line x1="${x}" x2="${x}" y1="${y0}" y2="${y0 + 4}" stroke="#475569"/>`;
+          out += `<text x="${x}" y="${y0 + 16}" text-anchor="middle" fill="#64748b" font-size="10">${label}</text>`;
+        }
+        return out;
+      },
+      onPremMove(ev, pid) {
+        const { dates, premium } = this.premVisible(pid);
+        if (!dates.length) return;
+        const svg = ev.currentTarget;
+        const rect = svg.getBoundingClientRect();
+        const xView = (ev.clientX - rect.left) / rect.width * this.PREM_W;
+        const innerW = this.PREM_W - this.PREM_PAD_L - this.PREM_PAD_R;
+        const n = dates.length;
+        let idx = Math.round((xView - this.PREM_PAD_L) / innerW * (n - 1));
+        idx = Math.max(0, Math.min(n - 1, idx));
+        const v = premium[idx];
+        if (v === null || v === undefined) return;
+        this.premHover[pid] = {
+          idx, x: this.premXOf(idx, n), y: this.premYOf(pid, v),
+          date: dates[idx], v, pxPct: this.premXOf(idx, n) / this.PREM_W,
+        };
+      },
+      premTooltipLeft(pid) {
+        const h = this.premHover[pid];
+        if (!h) return 0;
+        const w = 360;  // aproximação: card = metade do grid
+        let left = h.pxPct * w + 10;
+        if (h.pxPct > 0.7) left = h.pxPct * w - 90;
+        return Math.max(8, left);
       },
 
       goTicker() {

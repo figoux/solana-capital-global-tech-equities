@@ -284,3 +284,19 @@ CREATE INDEX IF NOT EXISTS idx_exposure_ticker         ON ticker_exposure(ticker
 CREATE INDEX IF NOT EXISTS idx_exposure_category       ON business_exposures(category, sort_order);
 CREATE INDEX IF NOT EXISTS idx_volatility_date         ON volatility(as_of_date DESC);
 CREATE INDEX IF NOT EXISTS idx_pairs_cosine            ON pairs_similarity(cosine_sim DESC);
+
+-- ---------- ADR premium vs local share (pares SKHY, TSM) ----------
+
+CREATE TABLE IF NOT EXISTS adr_premium (
+  pair_id          TEXT NOT NULL,     -- 'SKHY', 'TSM'
+  date             TEXT NOT NULL,     -- YYYY-MM-DD
+  adr_close        REAL,              -- close do ADR na moeda do ADR (USD)
+  local_close      REAL,              -- close da ação local na moeda local
+  fx               REAL,              -- FX local-per-USD usado na conversão
+  local_in_adr_ccy REAL,              -- local convertido p/ moeda do ADR, ajustado pelo ratio
+  ratio            REAL,              -- ações locais por 1 ADR
+  premium_pct      REAL,              -- (adr / local_in_adr_ccy - 1) * 100
+  PRIMARY KEY (pair_id, date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_adr_premium_date ON adr_premium(pair_id, date DESC);

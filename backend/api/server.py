@@ -282,6 +282,73 @@ def mag6_erp():
     }
 
 
+@app.get("/api/adr-premium/{pair_id}")
+def adr_premium(pair_id: str):
+    """Prêmio histórico ADR vs ação local (pares em backend.etl.adr_premium.PAIRS).
+
+    Retorna: meta (tickers/fx/ratio), history (dates, premium, rolling 1y/5y) e stats.
+    """
+    from backend.etl.adr_premium import PAIRS as ADR_PAIRS
+
+    pair_id = pair_id.upper()
+    if pair_id not in ADR_PAIRS:
+        raise HTTPException(status_code=404, detail=f"pair '{pair_id}' não configurado")
+    cfg = ADR_PAIRS[pair_id]
+
+    conn = _db()
+    rows = conn.execute(
+        "SELECT date, adr_close, local_close, fx, premium_pct, ratio "
+        "FROM adr_premium WHERE pair_id=? ORDER BY date ASC",
+        (pair_id,),
+    ).fetchall()
+    conn.close()
+
+    dates = [r["date"] for r in rows]
+    premium = [r["premium_pct"] for r in rows]
+
+    def _rolling_mean(series: list[float], window: int, min_periods: int) -> list[float | None]:
+        out: list[float | None] = []
+        for i in range(len(series)):
+            chunk = [v for v in series[max(0, i - window + 1): i + 1] if v is not None]
+            out.append(round(sum(chunk) / len(chunk), 3) if len(chunk) >= min_periods else None)
+        return out
+
+    rolling_1y = _rolling_mean(premium, 252, 60)
+    rolling_5y = _rolling_mean(premium, 1260, 252)
+
+    valid = [v for v in premium if v is not None]
+    stats = {
+        "history_days": len(dates),
+        "first_date": dates[0] if dates else None,
+        "last_date": dates[-1] if dates else None,
+        "current": premium[-1] if premium else None,
+        "avg_1y_now": rolling_1y[-1] if rolling_1y else None,
+        "avg_5y_now": rolling_5y[-1] if rolling_5y else None,
+        "min": round(min(valid), 3) if valid else None,
+        "max": round(max(valid), 3) if valid else None,
+        "adr_close": rows[-1]["adr_close"] if rows else None,
+        "local_close": rows[-1]["local_close"] if rows else None,
+        "fx": rows[-1]["fx"] if rows else None,
+        "ratio": rows[-1]["ratio"] if rows else None,
+    }
+    return {
+        "pair_id": pair_id,
+        "meta": {
+            "name": cfg["name"],
+            "adr": cfg["adr"],
+            "local": cfg["local"],
+            "fx": cfg["fx"],
+        },
+        "history": {
+            "dates": dates,
+            "premium": premium,
+            "rolling_1y": rolling_1y,
+            "rolling_5y": rolling_5y,
+        },
+        "stats": stats,
+    }
+
+
 @app.get("/api/earnings/week")
 def earnings_week(n: int = 2):
     """Earnings nas próximas N semanas (default 2)."""

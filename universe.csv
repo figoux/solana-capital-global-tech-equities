@@ -19,7 +19,8 @@ SWKS,SWKS,Skyworks Solutions,Semis,US,USD,Sep,19,,0
 GFS,GFS,GlobalFoundries,Semis,US,USD,Dec,21,,0
 COHR,COHR,Coherent Corp,Semis,US,USD,Jun,22,also CPO/optics,0
 UMC,UMC,United Microelectronics,Semis,TW,USD,Dec,23,,0
-000660.KS,000660.KS,SK Hynix,Semis,KR,KRW,Dec,24,,0
+SKHY,SKHY,SK Hynix ADR,Semis,KR,USD,Dec,24,ADR of 000660.KS (Nasdaq IPO Jul-2026),0
+000660.KS,000660.KS,SK Hynix (Seoul local),Semis,KR,KRW,Dec,24,local leg of SKHY ADR premium pair,0
 RMBS,RMBS,Rambus,Semis,US,USD,Dec,25,,0
 SNDK,SNDK,Sandisk,Semis,US,USD,Dec,32,pure NAND flash; spun off from WDC Feb-2025,0
 WDC,WDC,Western Digital,Semis,US,USD,Jun,33,HDDs post-Sandisk spinoff,0
@@ -130,3 +131,5 @@ UNITREE_PVT,,Unitree Robotics,Robotics,CN,CNY,Dec,151,"private; humanoid/quadrup
 MINIMAX_PVT,,MiniMax AI,SaaS,CN,CNY,Dec,152,"private; LLM lab (Talkie, ABAB)",1
 688256.SS,688256.SS,Cambricon Technologies,Semis,CN,CNY,Dec,153,"AI chips; STAR Market — Shanghai",0
 BE,BE,Bloom Energy,Cloud/Data,US,USD,Dec,154,solid oxide fuel cells — datacenter power,0
+TSLA,TSLA,Tesla,Robotics,US,USD,Dec,7,EV/FSD/Optimus — classified Robotics,0
+SPCX,SPCX,Space Exploration Technologies (SpaceX),Space,US,USD,Dec,15,launch + Starlink — Nasdaq IPO 2026 — new Space subsector,0
