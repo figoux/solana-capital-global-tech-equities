@@ -54,6 +54,15 @@
     <button @click="goTicker()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded text-sm font-medium">Open →</button>
   </div>
 
+  <!-- Correlations (embed) -->
+  <section class="mb-8">
+    <div class="flex items-baseline justify-between mb-3">
+      <h2 class="text-lg font-semibold">Correlation matrices</h2>
+      <a href="/correlations" class="text-xs muted hover:text-emerald-400">open full page</a>
+    </div>
+    <iframe src="/correlations" title="Correlation matrices" class="w-full border border-slate-800 rounded" style="height:620px;background:#0d1424"></iframe>
+  </section>
+
   <!-- Heatmap -->
   <section class="mb-8">
     <div class="flex items-end justify-between mb-3 gap-4 flex-wrap">
