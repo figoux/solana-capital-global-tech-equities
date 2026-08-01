@@ -976,3 +976,7 @@ def set_direction_override(body: DirectionOverrideBody):
 
 if (FRONTEND_DIR / "assets").exists():
     app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
+
+@app.get("/correlations")
+def correlations_page() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "correlations.html")
